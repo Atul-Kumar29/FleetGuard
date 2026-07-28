@@ -1,122 +1,113 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from 'react';
+import { registerVehicle } from './services/api';
+
+const initialForm = {
+  vin: '',
+  license_plate: '',
+  make: '',
+  model: '',
+  year: new Date().getFullYear(),
+  type: 'TRUCK',
+  status: 'ACTIVE',
+  current_mileage: 0,
+};
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [form, setForm] = useState(initialForm);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setMessage('');
+    setError('');
+
+    try {
+      const payload = {
+        ...form,
+        year: Number(form.year),
+        current_mileage: Number(form.current_mileage),
+      };
+
+      const result = await registerVehicle(payload);
+      setMessage(`Vehicle registered successfully: ${result.vehicle?.license_plate || 'New vehicle'}`);
+      setForm(initialForm);
+    } catch (err) {
+      setError(err.message || 'Unable to register vehicle.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="page-shell">
+      <div className="card">
+        <div className="card-header">
+          <p className="eyebrow">FleetGuard</p>
+          <h1>Register a new vehicle</h1>
+          <p className="subtitle">Capture the core fleet details required to keep compliance checks accurate.</p>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
 
-      <div className="ticks"></div>
+        <form onSubmit={handleSubmit} className="vehicle-form">
+          <div className="grid">
+            <label>
+              <span>VIN</span>
+              <input name="vin" value={form.vin} onChange={handleChange} required />
+            </label>
+            <label>
+              <span>License plate</span>
+              <input name="license_plate" value={form.license_plate} onChange={handleChange} required />
+            </label>
+            <label>
+              <span>Make</span>
+              <input name="make" value={form.make} onChange={handleChange} required />
+            </label>
+            <label>
+              <span>Model</span>
+              <input name="model" value={form.model} onChange={handleChange} required />
+            </label>
+            <label>
+              <span>Year</span>
+              <input name="year" type="number" min="1900" max="2100" value={form.year} onChange={handleChange} required />
+            </label>
+            <label>
+              <span>Current mileage</span>
+              <input name="current_mileage" type="number" min="0" value={form.current_mileage} onChange={handleChange} required />
+            </label>
+            <label>
+              <span>Vehicle type</span>
+              <select name="type" value={form.type} onChange={handleChange}>
+                <option value="TRUCK">Truck</option>
+                <option value="VAN">Van</option>
+                <option value="TRAILER">Trailer</option>
+                <option value="CAR">Car</option>
+              </select>
+            </label>
+            <label>
+              <span>Status</span>
+              <select name="status" value={form.status} onChange={handleChange}>
+                <option value="ACTIVE">Active</option>
+                <option value="IN_MAINTENANCE">In maintenance</option>
+                <option value="DECOMMISSIONED">Decommissioned</option>
+              </select>
+            </label>
+          </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          <button type="submit" disabled={loading}>{loading ? 'Registering…' : 'Register vehicle'}</button>
+        </form>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {message ? <p className="success">{message}</p> : null}
+        {error ? <p className="error">{error}</p> : null}
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;
