@@ -112,3 +112,118 @@ exports.getServiceQueue = async (req, res) => {
         });
     }
 };
+
+exports.completeService = async (req, res) => {
+    try {
+        const {
+            vehicleId,
+            serviceTypeId,
+            serviceDate,
+            odometerReading,
+            serviceCenter,
+            mechanicName,
+            cost,
+            notes,
+            nextServiceDate,
+            nextServiceKm
+        } = req.body;
+
+       
+        if (
+            !vehicleId ||
+            !serviceTypeId ||
+            !serviceDate ||
+            odometerReading === undefined
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required fields."
+            });
+        }
+
+      
+        const { data: vehicle, error: vehicleError } = await supabase
+            .from("vehicles")
+            .select("*")
+            .eq("id", vehicleId)
+            .single();
+
+        if (vehicleError || !vehicle) {
+            return res.status(404).json({
+                success: false,
+                message: "Vehicle not found."
+            });
+        }
+
+        
+        const { data: serviceType, error: serviceTypeError } = await supabase
+            .from("service_types")
+            .select("*")
+            .eq("id", serviceTypeId)
+            .single();
+
+        if (serviceTypeError || !serviceType) {
+            return res.status(404).json({
+                success: false,
+                message: "Service type not found."
+            });
+        }
+
+        const { error: logError } = await supabase
+            .from("service_logs")
+            .insert({
+                vehicle_id: vehicleId,
+                service_type_id: serviceTypeId,
+                service_date: serviceDate,
+                odometer_reading: odometerReading,
+                service_center: serviceCenter,
+                mechanic_name: mechanicName,
+                cost,
+                notes,
+                next_service_date: nextServiceDate,
+                next_service_km: nextServiceKm
+            });
+
+        if (logError) {
+            return res.status(500).json({
+                success: false,
+                message: logError.message
+            });
+        }
+
+        const { error: updateError } = await supabase
+            .from("vehicles")
+            .update({
+                current_mileage: odometerReading,
+                last_service_date: serviceDate,
+                last_service_mileage: odometerReading,
+                next_service_due_date: nextServiceDate,
+                next_service_due_mileage: nextServiceKm,
+                maintenance_risk: "LOW"
+            })
+            .eq("id", vehicleId);
+
+        if (updateError) {
+            return res.status(500).json({
+                success: false,
+                message: updateError.message
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Service completed successfully."
+        });
+
+    } catch (err) {
+        console.error(err);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error."
+        });
+    }
+};
+
+
+
