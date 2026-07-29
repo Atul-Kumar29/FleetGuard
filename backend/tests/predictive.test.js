@@ -30,8 +30,8 @@ describe('Predictive Maintenance API Tests', () => {
         make: 'Tata',
         model: 'Prima',
         current_mileage: 48000,
-        maintenance_logs: [
-          { service_mileage: 39000, service_date: '2026-01-01' }
+        service_logs: [
+          { odometer_reading: 39000, service_date: '2026-01-01' }
         ]
       },
       {
@@ -40,9 +40,9 @@ describe('Predictive Maintenance API Tests', () => {
         make: 'Mahindra',
         model: 'Blazo',
         current_mileage: 22000,
-        maintenance_logs: [
-          { service_mileage: 18000, service_date: '2026-02-15' },
-          { service_mileage: 10000, service_date: '2025-10-10' } // older log
+        service_logs: [
+          { odometer_reading: 18000, service_date: '2026-02-15' },
+          { odometer_reading: 10000, service_date: '2025-10-10' } // older log
         ]
       },
       {
@@ -51,7 +51,7 @@ describe('Predictive Maintenance API Tests', () => {
         make: 'Ashok Leyland',
         model: 'U-Truck',
         current_mileage: 15000,
-        maintenance_logs: [] // No service history
+        service_logs: [] // No service history
       },
       {
         id: 'uuid-4',
@@ -59,8 +59,8 @@ describe('Predictive Maintenance API Tests', () => {
         make: 'Volvo',
         model: 'FMX',
         current_mileage: 30000,
-        maintenance_logs: [
-          { service_mileage: 19000, service_date: '2026-03-01' } // distance = 11000 (HIGH)
+        service_logs: [
+          { odometer_reading: 19000, service_date: '2026-03-01' } // distance = 11000 (HIGH)
         ]
       }
     ];
