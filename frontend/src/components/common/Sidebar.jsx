@@ -31,6 +31,20 @@ export default function Sidebar({ currentPage, onNavigate, onLogout }) {
         icon: '🚗',
         roles: ['FLEET_MANAGER', 'ADMIN'],
       });
+
+      baseItems.push({
+        id: 'fleet-analytics',
+        label: 'Fleet Analytics',
+        icon: '📊',
+        roles: ['FLEET_MANAGER', 'ADMIN'],
+      });
+
+      baseItems.push({
+        id: 'predictive-maintenance',
+        label: 'Predictive Risk',
+        icon: '🔧',
+        roles: ['FLEET_MANAGER', 'ADMIN'],
+      });
     }
 
     // Drivers can view assigned vehicles
