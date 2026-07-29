@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const complianceRoutes = require('./routes/complianceRoutes');
+const { startComplianceMonitoring } = require('./services/complianceScheduler');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -17,8 +18,12 @@ app.get('/health', (_req, res) => {
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/compliance', complianceRoutes);
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`FleetGuard backend listening on port ${port}`);
+
+  if (process.env.COMPLIANCE_MONITOR_ENABLED !== 'false') {
+    startComplianceMonitoring();
+  }
 });
 
 module.exports = app;

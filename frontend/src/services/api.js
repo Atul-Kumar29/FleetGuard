@@ -83,3 +83,21 @@ export async function updateCompliance(complianceId, updates) {
 
   return data;
 }
+
+export async function createCompliance(document) {
+  const response = await fetch(`${API_BASE_URL}/api/compliance`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+    body: JSON.stringify(document),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || 'Unable to create compliance document.');
+  }
+
+  return data;
+}
