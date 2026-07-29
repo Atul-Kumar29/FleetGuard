@@ -136,3 +136,21 @@ export async function createCompliance(document) {
 
   return data;
 }
+
+export async function getServiceQueue(search = "", status = "all", sort = "due_date") {
+  const response = await fetch(
+    `${API_BASE_URL}/api/services/queue?search=${encodeURIComponent(search)}&status=${status}&sort=${sort}`,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+      },
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to fetch service queue.'));
+  }
+
+  return data;
+}
