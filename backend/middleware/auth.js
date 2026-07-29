@@ -8,32 +8,30 @@ const DEMO_USERS = [
 ];
 
 function getDemoUserFromToken(token) {
-  if (typeof token !== 'string') {
+  if (!token.startsWith('token_')) {
     return null;
   }
 
-  const normalizedToken = token.trim();
-  const match = normalizedToken.match(/^token_([^_]+)(?:_.*)?$/i);
-  if (!match) {
+  const tokenParts = token.split('_');
+  if (tokenParts.length < 2) {
     return null;
   }
 
-  const userId = match[1];
+  const userId = tokenParts[1];
   return DEMO_USERS.find((user) => user.id === userId) || null;
 }
 
 function requireRole(allowedRoles = []) {
   return async function authMiddleware(req, res, next) {
     try {
-      const authHeader = req.headers.authorization || req.headers.Authorization || '';
-      const token = authHeader.toString().startsWith('Bearer ') ? authHeader.slice(7) : authHeader.toString().startsWith('bearer ') ? authHeader.slice(7) : '';
-      const normalizedToken = token.trim();
+      const authHeader = req.headers.authorization || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
 
-      if (!normalizedToken) {
+      if (!token) {
         return res.status(401).json({ error: 'Authentication token is required.' });
       }
 
-      const demoUser = getDemoUserFromToken(normalizedToken);
+      const demoUser = getDemoUserFromToken(token);
       if (demoUser) {
         if (allowedRoles.length > 0 && !allowedRoles.includes(demoUser.role)) {
           return res.status(403).json({ error: 'You do not have permission to perform this action.' });
