@@ -101,3 +101,20 @@ export async function createCompliance(document) {
 
   return data;
 }
+
+export async function getAssignmentOverrides() {
+  const response = await fetch(`${API_BASE_URL}/api/admin/overrides`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || 'Unable to fetch assignment overrides.');
+  }
+
+  return data;
+}

@@ -9,6 +9,7 @@ import FleetListPage from './pages/FleetListPage';
 import VehicleDetailsPage from './pages/VehicleDetailsPage';
 import PredictiveMaintenance from './pages/PredictiveMaintenance';
 import FleetAnalytics from './pages/FleetAnalytics';
+import AdminDashboard from './pages/AdminDashboard';
 
 function AppContent() {
   const { user } = useAuth();
@@ -100,10 +101,7 @@ function AppContent() {
 
       {currentPage === 'admin' && (
         <ProtectedRoute allowedRoles={['ADMIN']}>
-          <div className="page-content">
-            <h2>Admin Panel</h2>
-            <p>Coming soon: Administrative tools</p>
-          </div>
+          <AdminDashboard />
         </ProtectedRoute>
       )}
     </MainLayout>
