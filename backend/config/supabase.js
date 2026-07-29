@@ -14,6 +14,10 @@ if (!supabaseUrl || !supabaseKey) {
   console.warn('Supabase environment variables are not fully configured.');
 }
 
+// Debug: show which key type is present
+console.log("Using Service Role:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+console.log("Using Anon Key:", !!process.env.SUPABASE_ANON_KEY);
+
 function createSupabaseClient(accessToken) {
   if (!supabaseUrl || !supabaseKey) return null;
 

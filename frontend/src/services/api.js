@@ -2,7 +2,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function getApiError(data, fallback) {
   const details = Array.isArray(data.details) ? data.details.join(' ') : data.details;
-  return details || data.error || fallback;
+  return details || data.error || data.message || fallback;
 }
 
 export async function loginWithSupabase(email, password) {
@@ -132,6 +132,42 @@ export async function createCompliance(document) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(getApiError(data, 'Unable to create compliance document.'));
+  }
+
+  return data;
+}
+
+export async function getServiceQueue(search = "", status = "all", sort = "due_date") {
+  const response = await fetch(
+    `${API_BASE_URL}/api/services/queue?search=${encodeURIComponent(search)}&status=${status}&sort=${sort}`,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+      },
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to fetch service queue.'));
+  }
+
+  return data;
+}
+
+export async function postCompleteService(payload) {
+  const response = await fetch(`${API_BASE_URL}/api/services/complete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("fleetguard_token") || ""}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, "Unable to complete service."));
   }
 
   return data;
