@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const vehicleRoutes = require('./routes/vehicleRoutes');
+const complianceRoutes = require('./routes/complianceRoutes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -14,6 +15,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/vehicles', vehicleRoutes);
+app.use('/api/compliance', complianceRoutes);
 
 app.listen(port, () => {
   console.log(`FleetGuard backend listening on port ${port}`);

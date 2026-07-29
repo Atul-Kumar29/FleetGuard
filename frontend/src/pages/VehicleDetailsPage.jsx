@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getVehicleDetails } from '../services/api';
+import ComplianceEditModal from '../components/common/ComplianceEditModal';
 
 function formatDate(dateString) {
   if (!dateString) return 'N/A';
@@ -31,6 +32,8 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
   const [compliance, setCompliance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedCompliance, setSelectedCompliance] = useState(null);
 
   useEffect(() => {
     async function loadDetails() {
@@ -50,6 +53,17 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
       loadDetails();
     }
   }, [vehicleId]);
+
+  const handleEditCompliance = (complianceItem) => {
+    setSelectedCompliance(complianceItem);
+    setShowEditModal(true);
+  };
+
+  const handleComplianceSave = (updatedCompliance) => {
+    setCompliance((prev) =>
+      prev.map((item) => (item.id === updatedCompliance.id ? updatedCompliance : item))
+    );
+  };
 
   if (loading) {
     return <div className="details-page"><p>Loading vehicle details...</p></div>;
@@ -115,7 +129,12 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
             ) : (
               <div className="compliance-list">
                 {compliance.map((item) => (
-                  <div key={item.id} className="compliance-item">
+                  <div
+                    key={item.id}
+                    className="compliance-item"
+                    onClick={() => handleEditCompliance(item)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <div className="compliance-header">
                       <span className="doc-type">{item.document_type}</span>
                       <span
@@ -136,6 +155,12 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
                     <p className="last-verified">
                       Last verified: {formatDate(item.last_verified_at)}
                     </p>
+                    <button type="button" className="edit-btn" onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditCompliance(item);
+                    }}>
+                      Edit
+                    </button>
                   </div>
                 ))}
               </div>
@@ -143,6 +168,17 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
           </section>
         </div>
       </div>
+
+      {showEditModal && selectedCompliance && (
+        <ComplianceEditModal
+          compliance={selectedCompliance}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedCompliance(null);
+          }}
+          onSave={handleComplianceSave}
+        />
+      )}
     </div>
   );
 }

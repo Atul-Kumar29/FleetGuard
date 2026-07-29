@@ -64,3 +64,22 @@ export async function getFleetList(filters = {}) {
 
   return data;
 }
+
+export async function updateCompliance(complianceId, updates) {
+  const response = await fetch(`${API_BASE_URL}/api/compliance/${complianceId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+    body: JSON.stringify(updates),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Unable to update compliance document.');
+  }
+
+  return data;
+}
