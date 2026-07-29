@@ -1405,6 +1405,27 @@ button:disabled {
   width: 100%;
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.compliance-add-btn {
+  background: #2563eb;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 12px;
+}
+
+.compliance-add-btn:hover {
+  background: #1d4ed8;
+}
+
 .compliance-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

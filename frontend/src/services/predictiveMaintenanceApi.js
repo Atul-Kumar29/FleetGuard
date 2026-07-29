@@ -20,6 +20,6 @@ export const getPredictiveMaintenanceReport = async () => {
     console.error('API Error in getPredictiveMaintenanceReport:', error);
     // Propagate the specific backend error message if available
     const message = error.response?.data?.details || error.response?.data?.error || error.message;
-    throw new Error(message);
+    throw new Error(message, { cause: error });
   }
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getFleetAnalyticsMetrics } from '../services/fleetAnalyticsApi';
 import MetricCard from '../components/MetricCard';
 import { 
@@ -8,8 +8,7 @@ import {
   ShieldAlert, 
   AlertTriangle, 
   CircleDollarSign, 
-  AlertOctagon,
-  ArrowRightLeft
+  AlertOctagon
 } from 'lucide-react';
 
 export default function FleetAnalytics() {
@@ -31,7 +30,11 @@ export default function FleetAnalytics() {
   };
 
   useEffect(() => {
-    fetchMetrics();
+    const timer = setTimeout(() => {
+      void fetchMetrics();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Format currency helper

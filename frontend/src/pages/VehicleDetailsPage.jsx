@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getVehicleDetails } from '../services/api';
+import ComplianceCreateModal from '../components/common/ComplianceCreateModal';
 import ComplianceEditModal from '../components/common/ComplianceEditModal';
 import ComplianceStatusOverview from '../components/common/ComplianceStatusOverview';
 
@@ -12,6 +13,18 @@ function formatDate(dateString) {
   });
 }
 
+function getStatusColor(status) {
+  switch (status) {
+    case 'ACTIVE':
+      return '#10b981';
+    case 'IN_MAINTENANCE':
+      return '#f59e0b';
+    case 'DECOMMISSIONED':
+      return '#ef4444';
+    default:
+      return '#6b7280';
+  }
+}
 
 
 export default function VehicleDetailsPage({ vehicleId, onBack }) {
@@ -20,6 +33,7 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCompliance, setSelectedCompliance] = useState(null);
 
   useEffect(() => {
@@ -50,6 +64,10 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
     setCompliance((prev) =>
       prev.map((item) => (item.id === updatedCompliance.id ? updatedCompliance : item))
     );
+  };
+
+  const handleComplianceCreate = (createdCompliance) => {
+    setCompliance((current) => [...current, createdCompliance]);
   };
 
   if (loading) {
@@ -110,7 +128,12 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
           </section>
 
           <section>
-            <h2>Compliance Documents</h2>
+            <div className="section-header">
+              <h2>Compliance Documents</h2>
+              <button type="button" className="compliance-add-btn" onClick={() => setShowCreateModal(true)}>
+                Add Document
+              </button>
+            </div>
             <ComplianceStatusOverview
               compliance={compliance}
               onEdit={handleEditCompliance}
@@ -127,6 +150,14 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
             setSelectedCompliance(null);
           }}
           onSave={handleComplianceSave}
+        />
+      )}
+
+      {showCreateModal && (
+        <ComplianceCreateModal
+          vehicleId={vehicle.id}
+          onClose={() => setShowCreateModal(false)}
+          onCreate={handleComplianceCreate}
         />
       )}
     </div>
