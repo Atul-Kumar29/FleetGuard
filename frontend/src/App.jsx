@@ -1,122 +1,105 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import MainLayout from './components/common/MainLayout';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import VehicleRegistrationPage from './pages/VehicleRegistrationPage';
+import FleetListPage from './pages/FleetListPage';
+import VehicleDetailsPage from './pages/VehicleDetailsPage';
 
-function App() {
-  const [count, setCount] = useState(0)
+function AppContent() {
+  const { user } = useAuth();
+  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [selectedVehicleId, setSelectedVehicleId] = useState(null);
+
+  if (!user) {
+    return <LoginPage onLoginSuccess={() => setCurrentPage('dashboard')} />;
+  }
+
+  const handleNavigate = (page) => {
+    setCurrentPage(page);
+    setSelectedVehicleId(null);
+  };
+
+  const handleViewDetails = (vehicleId) => {
+    setSelectedVehicleId(vehicleId);
+    setCurrentPage('details');
+  };
+
+  const handleBackToFleet = () => {
+    setCurrentPage('fleet');
+    setSelectedVehicleId(null);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <MainLayout currentPage={currentPage} onNavigate={handleNavigate}>
+      {currentPage === 'dashboard' && <DashboardPage />}
 
-      <div className="ticks"></div>
+      {currentPage === 'register' && (
+        <ProtectedRoute allowedRoles={['FLEET_MANAGER', 'ADMIN']}>
+          <VehicleRegistrationPage />
+        </ProtectedRoute>
+      )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {currentPage === 'fleet' && (
+        <ProtectedRoute allowedRoles={['FLEET_MANAGER', 'ADMIN', 'DRIVER']}>
+          <FleetListPage onSelectVehicle={handleViewDetails} />
+        </ProtectedRoute>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {currentPage === 'details' && (
+        <ProtectedRoute allowedRoles={['FLEET_MANAGER', 'ADMIN', 'DRIVER']}>
+          <div style={{ position: 'relative', paddingTop: '40px' }}>
+            <button onClick={handleBackToFleet} className="nav-back-button">← Back to Fleet</button>
+            <VehicleDetailsPage vehicleId={selectedVehicleId} onBack={handleBackToFleet} />
+          </div>
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'my-vehicles' && (
+        <ProtectedRoute allowedRoles={['DRIVER']}>
+          <div className="page-content">
+            <h2>My Assigned Vehicles</h2>
+            <p>Coming soon: View vehicles assigned to you</p>
+          </div>
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'compliance' && (
+        <ProtectedRoute allowedRoles={['DRIVER']}>
+          <div className="page-content">
+            <h2>Compliance Status</h2>
+            <p>Coming soon: View compliance status for your vehicles</p>
+          </div>
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'services' && (
+        <ProtectedRoute allowedRoles={['MECHANIC', 'ADMIN']}>
+          <div className="page-content">
+            <h2>Service Logs</h2>
+            <p>Coming soon: Manage service records</p>
+          </div>
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'admin' && (
+        <ProtectedRoute allowedRoles={['ADMIN']}>
+          <div className="page-content">
+            <h2>Admin Panel</h2>
+            <p>Coming soon: Administrative tools</p>
+          </div>
+        </ProtectedRoute>
+      )}
+    </MainLayout>
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
