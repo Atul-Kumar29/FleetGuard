@@ -22,25 +22,22 @@ const supabase = supabaseUrl && supabaseKey
     })
   : null;
 
+let exportVal;
+
 if (supabase) {
-  // Attach properties for backwards compatibility with Dev branch destructured imports
   supabase.supabase = supabase;
   supabase.getSupabaseClient = function() {
-    if (!supabase) {
-      throw new Error('Supabase client is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY.');
-    }
     return supabase;
   };
+  exportVal = supabase;
 } else {
-  // If supabase client couldn't be configured, build a mock/empty export structure
-  // that throws when getSupabaseClient is invoked
-  const emptyExport = {};
-  emptyExport.supabase = null;
-  emptyExport.getSupabaseClient = function() {
-    throw new Error('Supabase client is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY.');
+  const emptyExport = {
+    supabase: null,
+    getSupabaseClient: function() {
+      throw new Error('Supabase client is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY.');
+    }
   };
-  module.exports = emptyExport;
-  return;
+  exportVal = emptyExport;
 }
 
-module.exports = supabase;
+module.exports = exportVal;

@@ -9,8 +9,17 @@ jest.mock('../config/supabase', () => {
     select: mockSelect
   }));
 
+  const mockClient = {
+    from: mockFrom,
+    auth: {
+      getUser: jest.fn()
+    }
+  };
+
   return {
     from: mockFrom,
+    supabase: mockClient,
+    getSupabaseClient: () => mockClient,
     // Expose selectors for easy assertion configuration in test cases
     _mockSelect: mockSelect
   };
