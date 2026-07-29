@@ -156,11 +156,27 @@ exports.completeService = async (req, res) => {
         }
 
         
+        // Debug logs to help trace why service type may not be found
+        console.log('========== DEBUG ==========');
+        console.log('Request Body:', req.body);
+        console.log('Vehicle ID:', vehicleId);
+        console.log('Service Type ID:', serviceTypeId);
+
+        // Fetch and log all service types (id and service_name)
+        const { data: allServiceTypes, error: allServiceTypesError } = await supabase
+            .from("service_types")
+            .select('id, service_name');
+        console.log('All Service Types:', allServiceTypes, 'fetchError:', allServiceTypesError);
+
         const { data: serviceType, error: serviceTypeError } = await supabase
             .from("service_types")
             .select("*")
             .eq("id", serviceTypeId)
             .single();
+
+        console.log('Matched Service Type:', serviceType);
+        console.log('Service Type Error:', serviceTypeError);
+        console.log('===========================');
 
         if (serviceTypeError || !serviceType) {
             return res.status(404).json({
@@ -169,41 +185,51 @@ exports.completeService = async (req, res) => {
             });
         }
 
+        const serviceLogData = {
+            vehicle_id: vehicleId,
+            service_type_id: serviceTypeId,
+            service_date: serviceDate,
+            odometer_reading: Number(odometerReading),
+            service_center: serviceCenter,
+            mechanic_name: mechanicName,
+            cost: cost != null ? Number(cost) : null,
+            notes,
+            next_service_date: nextServiceDate,
+            next_service_km: nextServiceKm != null ? Number(nextServiceKm) : null
+        };
+
+        console.log('========== SERVICE LOG DATA ==========', serviceLogData);
+
         const { error: logError } = await supabase
             .from("service_logs")
-            .insert({
-                vehicle_id: vehicleId,
-                service_type_id: serviceTypeId,
-                service_date: serviceDate,
-                odometer_reading: odometerReading,
-                service_center: serviceCenter,
-                mechanic_name: mechanicName,
-                cost,
-                notes,
-                next_service_date: nextServiceDate,
-                next_service_km: nextServiceKm
-            });
+            .insert(serviceLogData);
 
         if (logError) {
+            console.log('========== INSERT ERROR ==========', logError);
             return res.status(500).json({
                 success: false,
                 message: logError.message
             });
         }
 
+        const vehicleUpdateData = {
+            current_mileage: Number(odometerReading),
+            last_service_date: serviceDate,
+            last_service_mileage: Number(odometerReading),
+            next_service_due_date: nextServiceDate,
+            next_service_due_mileage: nextServiceKm != null ? Number(nextServiceKm) : null,
+            maintenance_risk: "LOW"
+        };
+
+        console.log('========== VEHICLE UPDATE DATA ==========', vehicleUpdateData);
+
         const { error: updateError } = await supabase
             .from("vehicles")
-            .update({
-                current_mileage: odometerReading,
-                last_service_date: serviceDate,
-                last_service_mileage: odometerReading,
-                next_service_due_date: nextServiceDate,
-                next_service_due_mileage: nextServiceKm,
-                maintenance_risk: "LOW"
-            })
+            .update(vehicleUpdateData)
             .eq("id", vehicleId);
 
         if (updateError) {
+            console.log('========== UPDATE ERROR ==========', updateError);
             return res.status(500).json({
                 success: false,
                 message: updateError.message
