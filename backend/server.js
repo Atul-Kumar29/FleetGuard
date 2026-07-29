@@ -7,6 +7,7 @@ const path = require('path');
 dotenv.config({ path: path.resolve(__dirname, './.env') });
 
 const predictiveMaintenanceRoutes = require('./routes/predictiveMaintenance.routes');
+const fleetAnalyticsRoutes = require('./routes/fleetAnalytics.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,6 +20,7 @@ app.use(express.json());
 
 // Mount the predictive maintenance routes under /api/admin
 app.use('/api/admin', predictiveMaintenanceRoutes);
+app.use('/api/admin', fleetAnalyticsRoutes);
 
 // Catch-all route for unhandled endpoints
 app.use((req, res) => {

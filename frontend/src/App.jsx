@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PredictiveMaintenance from './pages/PredictiveMaintenance';
-import { Shield, LayoutDashboard, Truck, Settings } from 'lucide-react';
+import FleetAnalytics from './pages/FleetAnalytics';
+import { Shield, LayoutDashboard, Truck, Settings, BarChart3, Wrench } from 'lucide-react';
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState('analytics'); // Default to Analytics dashboard
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       {/* Navbar */}
@@ -20,27 +23,35 @@ export default function App() {
             </div>
           </div>
           
-          {/* Navigation Items (Visual Placeholders for design completeness) */}
-          <nav className="hidden md:flex items-center gap-6">
-            <span className="text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors cursor-pointer inline-flex items-center gap-1.5">
-              <LayoutDashboard className="w-4 h-4" /> Dashboard
-            </span>
-            <span className="text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors cursor-pointer inline-flex items-center gap-1.5">
-              <Truck className="w-4 h-4" /> Fleet List
-            </span>
-            <span className="text-sm font-semibold text-sky-400 hover:text-sky-300 transition-colors cursor-pointer inline-flex items-center gap-1.5 border-b-2 border-sky-500 py-5">
-              Predictive Maintenance
-            </span>
-            <span className="text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors cursor-pointer inline-flex items-center gap-1.5">
-              <Settings className="w-4 h-4" /> Settings
-            </span>
+          {/* Interactive Navigation */}
+          <nav className="flex items-center gap-2 sm:gap-6">
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`text-xs sm:text-sm font-medium transition-all cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-lg ${
+                activeTab === 'analytics' 
+                  ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' 
+                  : 'text-slate-400 hover:text-slate-200 border border-transparent'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" /> Fleet Analytics
+            </button>
+            <button
+              onClick={() => setActiveTab('predictive')}
+              className={`text-xs sm:text-sm font-medium transition-all cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-lg ${
+                activeTab === 'predictive' 
+                  ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' 
+                  : 'text-slate-400 hover:text-slate-200 border border-transparent'
+              }`}
+            >
+              <Wrench className="w-4 h-4" /> Predictive Risk
+            </button>
           </nav>
         </div>
       </header>
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <PredictiveMaintenance />
+        {activeTab === 'analytics' ? <FleetAnalytics /> : <PredictiveMaintenance />}
       </main>
 
       {/* Footer */}
