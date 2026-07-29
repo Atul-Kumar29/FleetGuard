@@ -307,3 +307,239 @@ button:disabled {
   }
 }
 
+.nav-back-button {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  z-index: 10;
+}
+
+.nav-back-button:hover {
+  background: #1d4ed8;
+}
+
+.fleet-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #eef4ff 0%, #f8fafc 100%);
+  padding: 80px 24px 32px;
+}
+
+.fleet-header {
+  max-width: 1200px;
+  margin: 0 auto 32px;
+}
+
+.fleet-header .eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+
+.fleet-header h1 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+  color: #0f172a;
+}
+
+.fleet-header .subtitle {
+  color: #475569;
+  margin: 0;
+}
+
+.fleet-filters {
+  max-width: 1200px;
+  margin: 0 auto 24px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.filter-form {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-input,
+.filter-select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-select {
+  min-width: 150px;
+}
+
+.search-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: white;
+}
+
+.fleet-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.fleet-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  overflow-x: auto;
+}
+
+.fleet-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.fleet-table thead {
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.fleet-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.fleet-table tbody tr {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.fleet-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.fleet-table td {
+  padding: 12px 16px;
+  color: #0f172a;
+}
+
+.fleet-table .plate {
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.fleet-table .vin {
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.fleet-table .badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.fleet-table .compliance-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.view-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.view-btn:hover {
+  background: #1d4ed8;
+}
+
+.pagination-info {
+  text-align: center;
+  color: #64748b;
+  margin-top: 16px;
+  font-size: 0.9rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.link-button {
+  background: transparent;
+  color: #2563eb;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.link-button:hover {
+  background: #f0f9ff;
+}
+
+@media (max-width: 768px) {
+  .fleet-page {
+    padding: 60px 16px 24px;
+  }
+
+  .fleet-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .filter-form {
+    flex-direction: column;
+  }
+
+  .search-input,
+  .filter-select {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .fleet-table {
+    font-size: 0.8rem;
+  }
+
+  .fleet-table th,
+  .fleet-table td {
+    padding: 8px 12px;
+  }
+}
+
+

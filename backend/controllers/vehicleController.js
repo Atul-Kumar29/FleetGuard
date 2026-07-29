@@ -139,7 +139,93 @@ async function getVehicleDetails(req, res) {
   }
 }
 
+async function getFleetList(req, res) {
+  try {
+    const { type, status, search, limit = 50, offset = 0 } = req.query;
+    const supabase = getSupabaseClient();
+
+    let query = supabase.from('vehicles').select('*', { count: 'exact' });
+
+    if (type) {
+      query = query.eq('type', type.toUpperCase());
+    }
+
+    if (status) {
+      query = query.eq('status', status.toUpperCase());
+    }
+
+    if (search) {
+      const searchTerm = search.toUpperCase();
+      query = query.or(
+        `vin.ilike.%${searchTerm}%,license_plate.ilike.%${searchTerm}%,make.ilike.%${searchTerm}%,model.ilike.%${searchTerm}%`
+      );
+    }
+
+    const { data: vehicles, error: vehiclesError, count } = await query
+      .order('created_at', { ascending: false })
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
+
+    if (vehiclesError) {
+      return res.status(500).json({ error: 'Unable to fetch fleet list.', details: vehiclesError.message });
+    }
+
+    const vehicleIds = (vehicles || []).map((v) => v.id);
+    let complianceMap = {};
+
+    if (vehicleIds.length > 0) {
+      const { data: complianceItems, error: complianceError } = await supabase
+        .from('compliance_items')
+        .select('vehicle_id, status')
+        .in('vehicle_id', vehicleIds);
+
+      if (complianceError) {
+        return res.status(500).json({ error: 'Unable to fetch compliance status.', details: complianceError.message });
+      }
+
+      complianceMap = (complianceItems || []).reduce((acc, item) => {
+        if (!acc[item.vehicle_id]) {
+          acc[item.vehicle_id] = [];
+        }
+        acc[item.vehicle_id].push(item.status);
+        return acc;
+      }, {});
+    }
+
+    const enrichedVehicles = (vehicles || []).map((vehicle) => {
+      const statuses = complianceMap[vehicle.id] || [];
+      const hasExpired = statuses.includes('EXPIRED');
+      const hasWarning = statuses.includes('WARNING');
+
+      let complianceStatus = 'VALID';
+      if (hasExpired) {
+        complianceStatus = 'EXPIRED';
+      } else if (hasWarning) {
+        complianceStatus = 'WARNING';
+      } else if (statuses.length === 0) {
+        complianceStatus = 'NO_RECORDS';
+      }
+
+      return {
+        ...vehicle,
+        compliance_status: complianceStatus,
+      };
+    });
+
+    return res.status(200).json({
+      vehicles: enrichedVehicles,
+      pagination: {
+        limit: Number(limit),
+        offset: Number(offset),
+        total: count,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || 'Unexpected server error.' });
+  }
+}
+
 module.exports = {
   registerVehicle,
   getVehicleDetails,
+  getFleetList,
 };

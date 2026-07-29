@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { registerVehicle } from './services/api';
 import VehicleDetailsPage from './pages/VehicleDetailsPage';
+import FleetListPage from './pages/FleetListPage';
 
 const initialForm = {
   vin: '',
@@ -59,6 +60,10 @@ function App() {
     setSelectedVehicleId(null);
   };
 
+  const handleViewFleet = () => {
+    setCurrentPage('fleet');
+  };
+
   return (
     <>
       {currentPage === 'register' ? (
@@ -68,6 +73,10 @@ function App() {
               <p className="eyebrow">FleetGuard</p>
               <h1>Register a new vehicle</h1>
               <p className="subtitle">Capture the core fleet details required to keep compliance checks accurate.</p>
+            </div>
+
+            <div className="form-actions">
+              <button type="button" onClick={handleViewFleet} className="link-button">View Fleet</button>
             </div>
 
             <form onSubmit={handleSubmit} className="vehicle-form">
@@ -122,6 +131,11 @@ function App() {
             {error ? <p className="error">{error}</p> : null}
           </div>
         </div>
+      ) : currentPage === 'fleet' ? (
+        <>
+          <button onClick={() => setCurrentPage('register')} className="nav-back-button">← New Vehicle</button>
+          <FleetListPage onSelectVehicle={handleViewDetails} />
+        </>
       ) : (
         <VehicleDetailsPage vehicleId={selectedVehicleId} onBack={handleBackToRegister} />
       )}
