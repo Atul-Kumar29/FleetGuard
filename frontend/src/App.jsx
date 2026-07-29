@@ -7,6 +7,8 @@ import DashboardPage from './pages/DashboardPage';
 import VehicleRegistrationPage from './pages/VehicleRegistrationPage';
 import FleetListPage from './pages/FleetListPage';
 import VehicleDetailsPage from './pages/VehicleDetailsPage';
+import PredictiveMaintenance from './pages/PredictiveMaintenance';
+import FleetAnalytics from './pages/FleetAnalytics';
 
 function AppContent() {
   const { user } = useAuth();
@@ -81,6 +83,18 @@ function AppContent() {
             <h2>Service Logs</h2>
             <p>Coming soon: Manage service records</p>
           </div>
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'predictive-maintenance' && (
+        <ProtectedRoute allowedRoles={['FLEET_MANAGER', 'ADMIN']}>
+          <PredictiveMaintenance />
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'fleet-analytics' && (
+        <ProtectedRoute allowedRoles={['FLEET_MANAGER', 'ADMIN']}>
+          <FleetAnalytics />
         </ProtectedRoute>
       )}
 
