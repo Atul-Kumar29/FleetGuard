@@ -751,4 +751,194 @@ button:disabled {
   }
 }
 
+/* Compliance Status Components */
+.compliance-overview {
+  width: 100%;
+}
+
+.compliance-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+}
+
+.summary-item.valid {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.summary-item.warning {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.summary-item.expired {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.summary-item .count {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.summary-item .label {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.compliance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.compliance-card {
+  border-left: 4px solid #2563eb;
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.compliance-card:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  transform: translateY(-2px);
+}
+
+.compliance-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.compliance-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.doc-type {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.compliance-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.status-icon {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.compliance-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compliance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.compliance-row .label {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.compliance-row .value {
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+.compliance-edit-btn {
+  margin-top: 12px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.compliance-edit-btn:hover {
+  background: #1d4ed8;
+}
+
+.compliance-badge-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-left: 3px solid #2563eb;
+  padding: 4px 8px;
+  background: #f8fafc;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.doc-type-compact {
+  color: #0f172a;
+}
+
+@media (max-width: 768px) {
+  .compliance-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .compliance-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .compliance-status-badge {
+    align-self: flex-start;
+  }
+
+  .compliance-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
 

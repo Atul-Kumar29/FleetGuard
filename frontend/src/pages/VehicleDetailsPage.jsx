@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getVehicleDetails } from '../services/api';
 import ComplianceEditModal from '../components/common/ComplianceEditModal';
+import ComplianceStatusOverview from '../components/common/ComplianceStatusOverview';
 
 function formatDate(dateString) {
   if (!dateString) return 'N/A';
@@ -11,21 +12,7 @@ function formatDate(dateString) {
   });
 }
 
-function getStatusColor(status) {
-  switch (status) {
-    case 'ACTIVE':
-    case 'VALID':
-      return '#10b981';
-    case 'WARNING':
-      return '#f59e0b';
-    case 'EXPIRED':
-    case 'IN_MAINTENANCE':
-    case 'DECOMMISSIONED':
-      return '#ef4444';
-    default:
-      return '#6b7280';
-  }
-}
+
 
 export default function VehicleDetailsPage({ vehicleId, onBack }) {
   const [vehicle, setVehicle] = useState(null);
@@ -124,47 +111,10 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
 
           <section>
             <h2>Compliance Documents</h2>
-            {compliance.length === 0 ? (
-              <p className="empty">No compliance documents on record.</p>
-            ) : (
-              <div className="compliance-list">
-                {compliance.map((item) => (
-                  <div
-                    key={item.id}
-                    className="compliance-item"
-                    onClick={() => handleEditCompliance(item)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="compliance-header">
-                      <span className="doc-type">{item.document_type}</span>
-                      <span
-                        className="status-badge"
-                        style={{
-                          backgroundColor: getStatusColor(item.status),
-                        }}
-                      >
-                        {item.status}
-                      </span>
-                    </div>
-                    {item.document_number && (
-                      <p className="doc-number">Document: {item.document_number}</p>
-                    )}
-                    <p className="expiry-date">
-                      Expires: {formatDate(item.expiration_date)}
-                    </p>
-                    <p className="last-verified">
-                      Last verified: {formatDate(item.last_verified_at)}
-                    </p>
-                    <button type="button" className="edit-btn" onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditCompliance(item);
-                    }}>
-                      Edit
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <ComplianceStatusOverview
+              compliance={compliance}
+              onEdit={handleEditCompliance}
+            />
           </section>
         </div>
       </div>
