@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * Modern dashboard summary card with hover effects, borders, and custom background highlights.
  * 

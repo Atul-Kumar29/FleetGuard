@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   getPredictiveMaintenanceReport 
 } from '../services/predictiveMaintenanceApi';
@@ -12,7 +12,6 @@ import {
   CheckCircle2, 
   ShieldAlert, 
   ArrowUpDown, 
-  TrendingUp, 
   Inbox 
 } from 'lucide-react';
 
@@ -40,7 +39,11 @@ export default function PredictiveMaintenance() {
   };
 
   useEffect(() => {
-    fetchReport();
+    const timer = setTimeout(() => {
+      void fetchReport();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Compute stats based on complete dataset (before query/filter)

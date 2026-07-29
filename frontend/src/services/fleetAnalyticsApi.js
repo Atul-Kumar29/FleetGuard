@@ -19,6 +19,6 @@ export const getFleetAnalyticsMetrics = async () => {
   } catch (error) {
     console.error('API Error in getFleetAnalyticsMetrics:', error);
     const message = error.response?.data?.details || error.response?.data?.error || error.message;
-    throw new Error(message);
+    throw new Error(message, { cause: error });
   }
 };

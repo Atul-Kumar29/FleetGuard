@@ -1,5 +1,40 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+function getApiError(data, fallback) {
+  const details = Array.isArray(data.details) ? data.details.join(' ') : data.details;
+  return details || data.error || fallback;
+}
+
+export async function loginWithSupabase(email, password) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to sign in.'));
+  }
+
+  return data;
+}
+
+export async function registerWithSupabase(email, password, fullName, role) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, full_name: fullName, role }),
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to sign up.'));
+  }
+
+  return data;
+}
+
 export async function registerVehicle(payload) {
   const response = await fetch(`${API_BASE_URL}/api/vehicles`, {
     method: 'POST',
@@ -13,7 +48,7 @@ export async function registerVehicle(payload) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || 'Unable to register vehicle.');
+    throw new Error(getApiError(data, 'Unable to register vehicle.'));
   }
 
   return data;
@@ -31,7 +66,7 @@ export async function getVehicleDetails(vehicleId) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || 'Unable to fetch vehicle details.');
+    throw new Error(getApiError(data, 'Unable to fetch vehicle details.'));
   }
 
   return data;
@@ -59,7 +94,7 @@ export async function getFleetList(filters = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || 'Unable to fetch fleet list.');
+    throw new Error(getApiError(data, 'Unable to fetch fleet list.'));
   }
 
   return data;
@@ -78,7 +113,7 @@ export async function updateCompliance(complianceId, updates) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || 'Unable to update compliance document.');
+    throw new Error(getApiError(data, 'Unable to update compliance document.'));
   }
 
   return data;
@@ -96,7 +131,7 @@ export async function createCompliance(document) {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.error || 'Unable to create compliance document.');
+    throw new Error(getApiError(data, 'Unable to create compliance document.'));
   }
 
   return data;
