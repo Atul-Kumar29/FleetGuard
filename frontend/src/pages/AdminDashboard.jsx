@@ -66,7 +66,7 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-black flex items-center gap-2">
             <ShieldAlert className="w-7 h-7 text-red-500 animate-pulse" />
             Administrative Override Review
           </h1>

@@ -10,6 +10,7 @@ const serviceRoutes = require('./routes/serviceRoutes');
 const predictiveMaintenanceRoutes = require('./routes/predictiveMaintenance.routes');
 const fleetAnalyticsRoutes = require('./routes/fleetAnalytics.routes');
 const adminRoutes = require('./routes/adminRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Compliance scheduler service
 const { startComplianceMonitoring } = require('./services/complianceScheduler');
@@ -32,6 +33,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/admin', predictiveMaintenanceRoutes);
 app.use('/api/admin', fleetAnalyticsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin', notificationRoutes);
 
 // Catch-all route for unhandled endpoints
 app.use((req, res) => {
