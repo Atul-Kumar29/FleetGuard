@@ -3,13 +3,13 @@ const { calculateMaintenanceRisk } = require('../utils/riskCalculator');
 
 /**
  * Service to calculate predictive maintenance risk for all vehicles.
- * Retrieves vehicle data and joins with maintenance logs.
+ * Retrieves vehicle data and joins with service logs.
  * 
  * @returns {Promise<Array>} A list of vehicles with mileage and risk info.
  */
 async function getPredictiveMaintenanceRisk() {
-  // Query all vehicles along with their maintenance logs
-  // PostgREST will return maintenance_logs as an array nested in each vehicle object
+  // Query all vehicles along with their service logs (replacing old maintenance_logs)
+  // PostgREST will return service_logs as an array nested in each vehicle object
   const { data: vehicles, error } = await supabase
     .from('vehicles')
     .select(`
@@ -18,9 +18,16 @@ async function getPredictiveMaintenanceRisk() {
       make,
       model,
       current_mileage,
-      maintenance_logs (
-        service_mileage,
-        service_date
+      service_logs (
+        id,
+        service_date,
+        odometer_reading,
+        service_center,
+        mechanic_name,
+        cost,
+        notes,
+        next_service_date,
+        next_service_km
       )
     `);
 
@@ -38,25 +45,27 @@ async function getPredictiveMaintenanceRisk() {
 
   // Map each vehicle to include risk calculations
   return vehicles.map(vehicle => {
-    const logs = vehicle.maintenance_logs || [];
+    const logs = vehicle.service_logs || [];
     
     let lastServiceMileage = 0;
+    let latestLog = null;
     
     if (logs.length > 0) {
       // Find the log with the latest service date
-      const latestLog = logs.reduce((latest, current) => {
+      latestLog = logs.reduce((latest, current) => {
         const latestTime = new Date(latest.service_date).getTime();
         const currentTime = new Date(current.service_date).getTime();
         
         if (currentTime > latestTime) {
           return current;
         } else if (currentTime === latestTime) {
-          return current.service_mileage > latest.service_mileage ? current : latest;
+          // Fallback to comparing odometer_reading if service dates match
+          return current.odometer_reading > latest.odometer_reading ? current : latest;
         }
         return latest;
       });
       
-      lastServiceMileage = latestLog.service_mileage;
+      lastServiceMileage = latestLog.odometer_reading;
     }
 
     const { distanceSinceLastService, risk } = calculateMaintenanceRisk(
@@ -70,9 +79,14 @@ async function getPredictiveMaintenanceRisk() {
       make: vehicle.make,
       model: vehicle.model,
       currentMileage: vehicle.current_mileage,
-      lastServiceMileage: logs.length > 0 ? lastServiceMileage : 0,
+      lastServiceMileage: lastServiceMileage,
       distanceSinceLastService,
-      risk
+      risk,
+      lastServiceDate: latestLog?.service_date ?? null,
+      nextServiceKm: latestLog?.next_service_km ?? null,
+      nextServiceDate: latestLog?.next_service_date ?? null,
+      serviceCenter: latestLog?.service_center ?? null,
+      mechanicName: latestLog?.mechanic_name ?? null
     };
   });
 }
@@ -90,7 +104,12 @@ function getMockVehiclesReport() {
       currentMileage: 48000,
       lastServiceMileage: 39000,
       distanceSinceLastService: 9000,
-      risk: 'MEDIUM'
+      risk: 'MEDIUM',
+      lastServiceDate: '2026-01-01',
+      nextServiceKm: 49000,
+      nextServiceDate: '2026-07-01',
+      serviceCenter: 'Tata Motors Service',
+      mechanicName: 'Ramesh Kumar'
     },
     {
       vehicleId: 'uuid-demo-2',
@@ -100,7 +119,12 @@ function getMockVehiclesReport() {
       currentMileage: 22000,
       lastServiceMileage: 18000,
       distanceSinceLastService: 4000,
-      risk: 'LOW'
+      risk: 'LOW',
+      lastServiceDate: '2026-02-15',
+      nextServiceKm: 28000,
+      nextServiceDate: '2026-08-15',
+      serviceCenter: 'Mahindra Trucks Garage',
+      mechanicName: 'Sanjay Dutt'
     },
     {
       vehicleId: 'uuid-demo-3',
@@ -110,7 +134,12 @@ function getMockVehiclesReport() {
       currentMileage: 15000,
       lastServiceMileage: 0,
       distanceSinceLastService: 15000,
-      risk: 'HIGH'
+      risk: 'HIGH',
+      lastServiceDate: null,
+      nextServiceKm: null,
+      nextServiceDate: null,
+      serviceCenter: null,
+      mechanicName: null
     },
     {
       vehicleId: 'uuid-demo-4',
@@ -120,7 +149,12 @@ function getMockVehiclesReport() {
       currentMileage: 30000,
       lastServiceMileage: 19000,
       distanceSinceLastService: 11000,
-      risk: 'HIGH'
+      risk: 'HIGH',
+      lastServiceDate: '2026-03-01',
+      nextServiceKm: 29000,
+      nextServiceDate: '2026-09-01',
+      serviceCenter: 'Volvo Services HQ',
+      mechanicName: 'John Doe'
     },
     {
       vehicleId: 'uuid-demo-5',
@@ -130,7 +164,12 @@ function getMockVehiclesReport() {
       currentMileage: 85000,
       lastServiceMileage: 79500,
       distanceSinceLastService: 5500,
-      risk: 'LOW'
+      risk: 'LOW',
+      lastServiceDate: '2026-03-10',
+      nextServiceKm: 89500,
+      nextServiceDate: '2026-09-10',
+      serviceCenter: 'Eicher Diagnostics',
+      mechanicName: 'Gurpreet Singh'
     }
   ];
   return sampleVehicles;

@@ -8,6 +8,7 @@ const vehicleRoutes = require('./routes/vehicleRoutes');
 const complianceRoutes = require('./routes/complianceRoutes');
 const serviceRoutes = require('./routes/serviceRoutes'); 
 const predictiveMaintenanceRoutes = require('./routes/predictiveMaintenance.routes');
+const fleetAnalyticsRoutes = require('./routes/fleetAnalytics.routes');
 
 // Compliance scheduler service
 const { startComplianceMonitoring } = require('./services/complianceScheduler');
@@ -28,6 +29,7 @@ app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/compliance', complianceRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/admin', predictiveMaintenanceRoutes);
+app.use('/api/admin', fleetAnalyticsRoutes);
 
 // Catch-all route for unhandled endpoints
 app.use((req, res) => {
