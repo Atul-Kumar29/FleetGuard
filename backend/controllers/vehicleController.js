@@ -100,6 +100,46 @@ async function registerVehicle(req, res) {
   }
 }
 
+async function getVehicleDetails(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: 'Vehicle ID is required.' });
+    }
+
+    const supabase = getSupabaseClient();
+
+    const { data: vehicle, error: vehicleError } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (vehicleError || !vehicle) {
+      return res.status(404).json({ error: 'Vehicle not found.' });
+    }
+
+    const { data: complianceItems, error: complianceError } = await supabase
+      .from('compliance_items')
+      .select('*')
+      .eq('vehicle_id', id)
+      .order('expiration_date', { ascending: true });
+
+    if (complianceError) {
+      return res.status(500).json({ error: 'Unable to fetch compliance documents.', details: complianceError.message });
+    }
+
+    return res.status(200).json({
+      vehicle,
+      compliance_items: complianceItems || [],
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || 'Unexpected server error.' });
+  }
+}
+
 module.exports = {
   registerVehicle,
+  getVehicleDetails,
 };

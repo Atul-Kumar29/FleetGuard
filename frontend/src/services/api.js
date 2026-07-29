@@ -18,3 +18,21 @@ export async function registerVehicle(payload) {
 
   return data;
 }
+
+export async function getVehicleDetails(vehicleId) {
+  const response = await fetch(`${API_BASE_URL}/api/vehicles/${vehicleId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Unable to fetch vehicle details.');
+  }
+
+  return data;
+}
