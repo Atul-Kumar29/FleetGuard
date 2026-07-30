@@ -10,6 +10,7 @@ import VehicleDetailsPage from './pages/VehicleDetailsPage';
 import PredictiveMaintenance from './pages/PredictiveMaintenance';
 import FleetAnalytics from './pages/FleetAnalytics';
 import AdminDashboard from './pages/AdminDashboard';
+import NotificationPage from './pages/NotificationPage';
 
 function AppContent() {
   const { user } = useAuth();
@@ -102,6 +103,12 @@ function AppContent() {
       {currentPage === 'admin' && (
         <ProtectedRoute allowedRoles={['ADMIN']}>
           <AdminDashboard />
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'notifications' && (
+        <ProtectedRoute allowedRoles={['ADMIN']}>
+          <NotificationPage />
         </ProtectedRoute>
       )}
     </MainLayout>
