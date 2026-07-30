@@ -36,9 +36,12 @@ function toUtcDate(value) {
  * Generates CRITICAL notification if expired, WARNING notification if expiring within 7 days.
  */
 async function getComplianceNotifications(client, todayDate) {
-  const { data: items, error } = await client
-    .from('compliance_items')
-    .select('id, vehicle_id, document_type, expiration_date');
+  const [vehicleDetailsMap, { data: items, error }] = await Promise.all([
+    getVehicleDetailsMap(client),
+    client
+      .from('compliance_items')
+      .select('id, vehicle_id, document_type, expiration_date')
+  ]);
 
   if (error) {
     throw new Error(`Database error in getComplianceNotifications: ${error.message}`);
@@ -53,24 +56,28 @@ async function getComplianceNotifications(client, todayDate) {
     if (!expirationDate) return;
 
     const label = getDocumentLabel(item.document_type);
+    const vehicleDetails = vehicleDetailsMap.get(item.vehicle_id) || {};
+    const vehicleLabel = vehicleDetails.licensePlate || item.vehicle_id;
 
     if (expirationDate < todayDate) {
       notifications.push({
         id: `expiry-${item.id}`,
-        vehicleId: item.vehicle_id,
+        vehicleId: vehicleLabel,
+        licensePlate: vehicleLabel,
         type: 'EXPIRY',
         title: `${label} Expired`,
-        message: `${label} for vehicle ${item.vehicle_id} expired on ${item.expiration_date}.`,
+        message: `${label} for vehicle ${vehicleLabel} expired on ${item.expiration_date}.`,
         severity: 'CRITICAL',
         createdAt: item.expiration_date
       });
     } else if (expirationDate <= warningLimitDate) {
       notifications.push({
         id: `expiry-${item.id}`,
-        vehicleId: item.vehicle_id,
+        vehicleId: vehicleLabel,
+        licensePlate: vehicleLabel,
         type: 'EXPIRY',
         title: `${label} Expiring Soon`,
-        message: `${label} for vehicle ${item.vehicle_id} will expire on ${item.expiration_date}.`,
+        message: `${label} for vehicle ${vehicleLabel} will expire on ${item.expiration_date}.`,
         severity: 'WARNING',
         createdAt: item.expiration_date
       });
@@ -87,7 +94,7 @@ async function getComplianceNotifications(client, todayDate) {
 async function getServiceNotifications(client, todayDate) {
   const { data: vehicles, error } = await client
     .from('vehicles')
-    .select('id, current_mileage, next_service_due_date, next_service_due_mileage');
+    .select('id, current_mileage, next_service_due_date, next_service_due_mileage, license_plate');
 
   if (error) {
     throw new Error(`Database error in getServiceNotifications: ${error.message}`);
@@ -115,7 +122,8 @@ async function getServiceNotifications(client, todayDate) {
 
       notifications.push({
         id: `service-${vehicle.id}`,
-        vehicleId: vehicle.id,
+        vehicleId: vehicle.license_plate || vehicle.id,
+        licensePlate: vehicle.license_plate || vehicle.id,
         type: 'SERVICE',
         title: 'Vehicle Service Overdue',
         message: message,
@@ -134,23 +142,32 @@ async function getServiceNotifications(client, todayDate) {
  * Generates INFO severity auditing notifications.
  */
 async function getOverrideNotifications(client) {
-  const { data: overrides, error } = await client
-    .from('assignment_overrides')
-    .select('id, vehicle_id, driver_id, approved_by, justification, created_at');
+  const [vehicleDetailsMap, { data: overrides, error }] = await Promise.all([
+    getVehicleDetailsMap(client),
+    client
+      .from('assignment_overrides')
+      .select('id, vehicle_id, driver_id, approved_by, justification, created_at')
+  ]);
 
   if (error) {
     throw new Error(`Database error in getOverrideNotifications: ${error.message}`);
   }
 
-  return (overrides || []).map(item => ({
-    id: `override-${item.id}`,
-    vehicleId: item.vehicle_id,
-    type: 'OVERRIDE',
-    title: 'Assignment Override',
-    message: `Assignment override occurred for vehicle ${item.vehicle_id} (Driver: ${item.driver_id}) authorized by ${item.approved_by}. Justification: ${item.justification || 'No justification reason provided.'}`,
-    severity: 'INFO',
-    createdAt: item.created_at
-  }));
+  return (overrides || []).map(item => {
+    const vehicleDetails = vehicleDetailsMap.get(item.vehicle_id) || {};
+    const vehicleLabel = vehicleDetails.licensePlate || item.vehicle_id;
+
+    return {
+      id: `override-${item.id}`,
+      vehicleId: vehicleLabel,
+      licensePlate: vehicleLabel,
+      type: 'OVERRIDE',
+      title: 'Assignment Override',
+      message: `Assignment override occurred for vehicle ${vehicleLabel} (Driver: ${item.driver_id}) authorized by ${item.approved_by}. Justification: ${item.justification || 'No justification reason provided.'}`,
+      severity: 'INFO',
+      createdAt: item.created_at
+    };
+  });
 }
 
 /**

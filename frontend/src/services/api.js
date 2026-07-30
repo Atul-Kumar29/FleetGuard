@@ -170,6 +170,25 @@ export async function getServiceQueue(search = "", status = "all", sort = "due_d
   return data;
 }
 
+export async function getServiceTypes() {
+  const response = await fetch(`${API_BASE_URL}/api/services/service-types`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to fetch service types.'));
+  }
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  return Array.isArray(data?.data) ? data.data : [];
+}
+
 export async function postCompleteService(payload) {
   const response = await fetch(`${API_BASE_URL}/api/services/complete`, {
     method: "POST",
