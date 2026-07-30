@@ -3,6 +3,7 @@ import { getVehicleDetails } from '../services/api';
 import ComplianceCreateModal from '../components/common/ComplianceCreateModal';
 import ComplianceEditModal from '../components/common/ComplianceEditModal';
 import ComplianceStatusOverview from '../components/common/ComplianceStatusOverview';
+import AssignDriverDrawer from '../components/common/AssignDriverDrawer';
 
 function formatDate(dateString) {
   if (!dateString) return 'N/A';
@@ -34,22 +35,23 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
   const [error, setError] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAssignDrawer, setShowAssignDrawer] = useState(false);
   const [selectedCompliance, setSelectedCompliance] = useState(null);
 
-  useEffect(() => {
-    async function loadDetails() {
-      try {
-        setLoading(true);
-        const result = await getVehicleDetails(vehicleId);
-        setVehicle(result.vehicle);
-        setCompliance(result.compliance_items || []);
-      } catch (err) {
-        setError(err.message || 'Unable to load vehicle details.');
-      } finally {
-        setLoading(false);
-      }
+  const loadDetails = async () => {
+    try {
+      setLoading(true);
+      const result = await getVehicleDetails(vehicleId);
+      setVehicle(result.vehicle);
+      setCompliance(result.compliance_items || []);
+    } catch (err) {
+      setError(err.message || 'Unable to load vehicle details.');
+    } finally {
+      setLoading(false);
     }
+  };
 
+  useEffect(() => {
     if (vehicleId) {
       loadDetails();
     }
@@ -97,8 +99,18 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
       <button onClick={onBack} className="back-button">← Back</button>
 
       <div className="details-card">
-        <h1>{vehicle.make} {vehicle.model}</h1>
-        <p className="subtitle">{vehicle.year} | {vehicle.type}</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1>{vehicle.make} {vehicle.model}</h1>
+            <p className="subtitle">{vehicle.year} | {vehicle.type}</p>
+          </div>
+          <button
+            className="btn-primary"
+            onClick={() => setShowAssignDrawer(true)}
+          >
+            Assign Driver
+          </button>
+        </div>
 
         <div className="details-grid">
           <section>
@@ -160,6 +172,13 @@ export default function VehicleDetailsPage({ vehicleId, onBack }) {
           onCreate={handleComplianceCreate}
         />
       )}
+
+      <AssignDriverDrawer
+        isOpen={showAssignDrawer}
+        onClose={() => setShowAssignDrawer(false)}
+        vehicle={vehicle}
+        onSuccess={loadDetails}
+      />
     </div>
   );
 }

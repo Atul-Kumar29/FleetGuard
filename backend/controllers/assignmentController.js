@@ -1,23 +1,9 @@
 require("dotenv").config();
-const { createClient } = require("@supabase/supabase-js");
-
-const supabaseUrl = process.env.SUPABASE_URL || process.env.supabaseurl || "https://ovndedlpvibrugmaghyy.supabase.co";
-const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || process.env.supabasekey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92bmRlZGxwdmlicnVnbWFnaHl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyMDcxNDksImV4cCI6MjEwMDc4MzE0OX0.rqnpBck-NOIJpgeucM6lDwJj7zzzwfIV6gGwwSe17zM";
-
-const supabase = createClient(
-    supabaseUrl,
-    supabaseKey,
-    {
-        realtime: {
-            transport: class DummyWebSocket {}
-        }
-    }
-);
-
-
+const { getSupabaseClient } = require("../config/supabase");
 
 const createAssignment = async (req, res) => {
     try {
+        const supabase = getSupabaseClient();
         const {
             driver_id,
             vehicle_id,
@@ -35,20 +21,23 @@ const createAssignment = async (req, res) => {
 
         const { data: driver, error: driverError } = await supabase
             .from("users")
-            .select("id, role, status")
+            .select("id, role")
             .eq("id", driver_id)
             .single();
 
         if (driverError || !driver) {
+            console.error("Driver fetch error:", driverError);
             return res.status(404).json({
-                error: "Driver not found"
+                error: "Driver not found",
+                details: driverError ? driverError.message : "No driver record found",
+                code: driverError ? driverError.code : null
             });
         }
 
 
         if (
             driver.role !== "DRIVER" ||
-            driver.status !== "ACTIVE"
+            (driver.status && driver.status !== "ACTIVE")
         ) {
             return res.status(400).json({
                 error: "Invalid driver",
@@ -183,6 +172,7 @@ const createAssignment = async (req, res) => {
 
 const overrideAssignment = async (req, res) => {
     try {
+        const supabase = getSupabaseClient();
         const {
             driver_id,
             vehicle_id,
@@ -213,7 +203,7 @@ const overrideAssignment = async (req, res) => {
         // 3. Verify driver exists and is active
         const { data: driver, error: driverError } = await supabase
             .from("users")
-            .select("id, role, status")
+            .select("id, role")
             .eq("id", driver_id)
             .single();
 
@@ -225,7 +215,7 @@ const overrideAssignment = async (req, res) => {
 
         if (
             driver.role !== "DRIVER" ||
-            driver.status !== "ACTIVE"
+            (driver.status && driver.status !== "ACTIVE")
         ) {
             return res.status(400).json({
                 error: "Invalid driver",

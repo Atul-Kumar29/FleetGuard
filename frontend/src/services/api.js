@@ -172,3 +172,97 @@ export async function postCompleteService(payload) {
 
   return data;
 }
+
+export async function getDrivers() {
+  const response = await fetch(`${API_BASE_URL}/api/driver/list`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to fetch drivers list.'));
+  }
+
+  return data;
+}
+
+export async function createAssignment(payload) {
+  const response = await fetch(`${API_BASE_URL}/api/assignments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to create driver assignment.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
+export async function overrideAssignment(payload) {
+  const response = await fetch(`${API_BASE_URL}/api/assignments/override`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to override driver assignment.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
+export async function getDriverVehicle(driverId) {
+  const query = driverId ? `?driver_id=${encodeURIComponent(driverId)}` : '';
+  const response = await fetch(`${API_BASE_URL}/api/driver/vehicle${query}`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+      'x-driver-id': driverId || localStorage.getItem('fleetguard_user_id') || '',
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to fetch driver assigned vehicle.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
+export async function postPreTripChecklist(payload) {
+  const response = await fetch(`${API_BASE_URL}/api/driver/pre-trip`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to submit pre-trip checklist.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}

@@ -1,74 +1,62 @@
 
 
 require("dotenv").config();
-const { createClient } = require("@supabase/supabase-js");
-
-const supabaseUrl = process.env.SUPABASE_URL || process.env.supabaseurl || "https://ovndedlpvibrugmaghyy.supabase.co";
-const supabaseKey = process.env.SUPABASE_KEY || process.env.supabasekey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92bmRlZGxwdmlicnVnbWFnaHl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyMDcxNDksImV4cCI6MjEwMDc4MzE0OX0.rqnpBck-NOIJpgeucM6lDwJj7zzzwfIV6gGwwSe17zM";
-
-const supabase = createClient(
-    supabaseUrl,
-    supabaseKey,
-    {
-        realtime: {
-            transport: class DummyWebSocket {}
-        }
-    }
-);
+const { getSupabaseClient } = require("../config/supabase");
 
 const getDriverVehicle = async (req, res) => {
     try {
-        const driver_id = req.query.driver_id || req.headers["x-driver-id"] || req.headers["driver-id"];
+        const supabase = getSupabaseClient();
+        let driver_id = req.query.driver_id || req.headers["x-driver-id"] || req.headers["driver-id"];
 
-        if (!driver_id) {
-            return res.status(400).json({
-                error: "Missing required fields",
-                message: "driver_id is required as a query parameter (?driver_id=...) or header (x-driver-id)"
-            });
+        let targetDriverId = driver_id;
+
+        // 1. If driver_id is provided, verify driver role & active status
+        if (targetDriverId) {
+            const { data: driverCheck } = await supabase
+                .from("users")
+                .select("id, role, status")
+                .eq("id", targetDriverId)
+                .maybeSingle();
+
+            // If the provided ID is not a DRIVER (e.g. FLEET_MANAGER/ADMIN viewing the console), clear targetDriverId to fallback to latest active assignment
+            if (driverCheck && driverCheck.role !== "DRIVER") {
+                targetDriverId = null;
+            }
         }
 
-        // 1. Verify driver exists and is active
-        const { data: driver, error: driverError } = await supabase
-            .from("users")
-            .select("id, role, status")
-            .eq("id", driver_id)
-            .single();
-
-        if (driverError || !driver) {
-            return res.status(404).json({
-                error: "Driver not found"
-            });
-        }
-
-        if (driver.role !== "DRIVER" || driver.status !== "ACTIVE") {
-            return res.status(400).json({
-                error: "Invalid driver",
-                message: "The specified user is not an active driver"
-            });
-        }
-
-        // 2. Fetch active assignment for driver
-        const { data: assignment, error: assignmentError } = await supabase
+        // 2. Fetch active assignment for targetDriverId (or latest active assignment if no targetDriverId)
+        let assignmentQuery = supabase
             .from("assignments")
             .select("*")
-            .eq("driver_id", driver_id)
             .eq("status", "ACTIVE")
-            .maybeSingle();
+            .order("created_at", { ascending: false });
+
+        if (targetDriverId) {
+            assignmentQuery = assignmentQuery.eq("driver_id", targetDriverId);
+        }
+
+        const { data: assignments, error: assignmentError } = await assignmentQuery;
 
         if (assignmentError) {
-            console.error(assignmentError);
-
-            return res.status(500).json({
-                error: "Failed to fetch assignment details"
-            });
+            console.error("Assignment fetch error:", assignmentError);
+            return res.status(500).json({ error: "Failed to fetch assignment details" });
         }
+
+        const assignment = assignments && assignments.length > 0 ? assignments[0] : null;
 
         if (!assignment) {
             return res.status(404).json({
                 error: "No active assignment found",
-                message: "This driver currently has no active vehicle assignment"
+                message: "No active vehicle assignment was found for this driver."
             });
         }
+
+        // 3. Fetch driver info for the assignment
+        const { data: driver } = await supabase
+            .from("users")
+            .select("id, role, status, email, full_name")
+            .eq("id", assignment.driver_id)
+            .maybeSingle();
 
         // 3. Fetch vehicle details
         const { data: vehicle, error: vehicleError } = await supabase
@@ -139,6 +127,7 @@ const getDriverVehicle = async (req, res) => {
 
 const submitPreTripChecklist = async (req, res) => {
     try {
+        const supabase = getSupabaseClient();
         const {
             driver_id,
             vehicle_id,
@@ -160,7 +149,7 @@ const submitPreTripChecklist = async (req, res) => {
         // 1. Verify driver exists and is active
         const { data: driver, error: driverError } = await supabase
             .from("users")
-            .select("id, role, status")
+            .select("id, role")
             .eq("id", driver_id)
             .single();
 
@@ -170,7 +159,7 @@ const submitPreTripChecklist = async (req, res) => {
             });
         }
 
-        if (driver.role !== "DRIVER" || driver.status !== "ACTIVE") {
+        if (driver.role !== "DRIVER" || (driver.status && driver.status !== "ACTIVE")) {
             return res.status(400).json({
                 error: "Invalid driver",
                 message: "The specified user is not an active driver"
@@ -242,7 +231,27 @@ const submitPreTripChecklist = async (req, res) => {
     }
 };
 
+const getDrivers = async (req, res) => {
+    try {
+        const supabase = getSupabaseClient();
+        const { data: drivers, error } = await supabase
+            .from("users")
+            .select("id, email, full_name, role")
+            .eq("role", "DRIVER");
+
+        if (error) {
+            return res.status(500).json({ error: "Failed to fetch drivers", details: error.message });
+        }
+
+        return res.status(200).json({ drivers: drivers || [] });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+};
+
 module.exports = {
     getDriverVehicle,
-    submitPreTripChecklist
+    submitPreTripChecklist,
+    getDrivers
 };

@@ -10,6 +10,7 @@ import VehicleDetailsPage from './pages/VehicleDetailsPage';
 import PredictiveMaintenance from './pages/PredictiveMaintenance';
 import FleetAnalytics from './pages/FleetAnalytics';
 import ServiceDashboard from './pages/ServiceDashboard';
+import DriverDashboard from './pages/DriverDashboard';
 function AppContent() {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -59,26 +60,15 @@ function AppContent() {
         </ProtectedRoute>
       )}
 
-      {/* {currentPage === 'my-vehicles' && (
-        <ProtectedRoute allowedRoles={['DRIVER']}>
-          <div className="page-content">
-            <h2>My Assigned Vehicles</h2>
-            <p>Coming soon: View vehicles assigned to you</p>
-          </div>
+      {currentPage === 'my-vehicles' && (
+        <ProtectedRoute allowedRoles={['DRIVER', 'ADMIN', 'FLEET_MANAGER']}>
+          <DriverDashboard />
         </ProtectedRoute>
-      )} */}
-      {currentPage === 'services' && (
-  <ProtectedRoute allowedRoles={['MECHANIC', 'ADMIN']}>
-    <ServiceDashboard />
-  </ProtectedRoute>
-)}
+      )}
 
       {currentPage === 'compliance' && (
-        <ProtectedRoute allowedRoles={['DRIVER']}>
-          <div className="page-content">
-            <h2>Compliance Status</h2>
-            <p>Coming soon: View compliance status for your vehicles</p>
-          </div>
+        <ProtectedRoute allowedRoles={['DRIVER', 'ADMIN', 'FLEET_MANAGER']}>
+          <DriverDashboard />
         </ProtectedRoute>
       )}
 
