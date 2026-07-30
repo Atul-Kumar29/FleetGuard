@@ -5,6 +5,9 @@ const vehicleRoutes = require('./routes/vehicleRoutes');
 const complianceRoutes = require('./routes/complianceRoutes');
 const { startComplianceMonitoring } = require('./services/complianceScheduler');
 const serviceRoutes = require('./routes/serviceRoutes'); 
+const assignmentRoutes = require('./routes/assignmentRoutes');
+const driverRoutes = require('./routes/driverRoutes');
+
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -18,6 +21,8 @@ app.get('/health', (_req, res) => {
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/compliance', complianceRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/driver', driverRoutes);
 
 const server = app.listen(port, () => {
   console.log(`FleetGuard backend listening on port ${port}`);

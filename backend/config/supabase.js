@@ -13,6 +13,9 @@ const supabase = supabaseUrl && supabaseKey
         persistSession: false,
         autoRefreshToken: false,
       },
+      realtime: {
+        transport: class DummyWebSocket {}
+      }
     })
   : null;
 

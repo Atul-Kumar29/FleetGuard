@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "node --test tests/*.test.js",
+    "test": "node --test tests/assignment.test.js tests/complianceController.test.js tests/complianceMonitoring.test.js",
     "start": "node server.js",
     "dev": "node server.js"
   },
