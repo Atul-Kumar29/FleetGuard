@@ -47,7 +47,7 @@ export default function MetricCard({ title, value, icon, color = 'sky' }) {
       <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-300 group-hover:w-2.5 ${leftBarBg}`} />
       
       <div className="space-y-1 ml-1.5">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</p>
+        <p className="text-xs font-semibold text-black-400 uppercase tracking-wider">{title}</p>
         <p className="text-3xl font-extrabold text-slate-100 tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">
           {value}
         </p>
