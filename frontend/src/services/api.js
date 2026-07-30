@@ -137,6 +137,21 @@ export async function createCompliance(document) {
   return data;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//vikas service code 
 export async function getServiceQueue(search = "", status = "all", sort = "due_date") {
   const response = await fetch(
     `${API_BASE_URL}/api/services/queue?search=${encodeURIComponent(search)}&status=${status}&sort=${sort}`,
@@ -168,6 +183,21 @@ export async function postCompleteService(payload) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(getApiError(data, "Unable to complete service."));
+  }
+
+  return data;
+}
+
+export async function getServiceHistory(vehicleId) {
+  const response = await fetch(`${API_BASE_URL}/api/services/history/${vehicleId}`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("fleetguard_token") || ""}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, "Unable to fetch service history."));
   }
 
   return data;

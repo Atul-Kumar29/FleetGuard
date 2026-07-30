@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { getServiceQueue, postCompleteService } from "../services/api";
+import { useEffect, useRef, useState } from "react";
+import { getServiceHistory, getServiceQueue, postCompleteService } from "../services/api";
 
 export default function ServiceDashboard() {
   const [vehicles, setVehicles] = useState([]);
@@ -10,6 +10,13 @@ export default function ServiceDashboard() {
   const [sort, setSort] = useState("due_date");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalError, setModalError] = useState("");
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const [historyRecords, setHistoryRecords] = useState([]);
+  const [selectedVehicleName, setSelectedVehicleName] = useState("");
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [form, setForm] = useState({
     vehicleId: "",
     serviceTypeId: "",
@@ -34,6 +41,33 @@ export default function ServiceDashboard() {
       setError(err.message || "Failed to load service queue.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadServiceHistory = async (vehicleId, vehicleLabel) => {
+    if (!vehicleId) {
+      setHistoryRecords([]);
+      setHistoryError("");
+      setSelectedVehicleName("");
+      setHistoryOpen(false);
+      return;
+    }
+
+    setHistoryLoading(true);
+    setHistoryError("");
+    setHistoryRecords([]);
+    setSelectedVehicleName(vehicleLabel || "");
+    setHistoryOpen(true);
+
+    try {
+      const result = await getServiceHistory(vehicleId);
+      const records = Array.isArray(result?.data) ? result.data : [];
+      records.sort((a, b) => new Date(b.serviceDate || 0) - new Date(a.serviceDate || 0));
+      setHistoryRecords(records);
+    } catch (err) {
+      setHistoryError(err.message || "Unable to load service history.");
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -118,16 +152,24 @@ export default function ServiceDashboard() {
                     <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>{vehicle.maintenanceRisk}</td>
                     <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>{vehicle.status}</td>
                     <td style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
-                      <button
-                        onClick={() => {
-                          setModalError("");
-                          setForm({ ...form, vehicleId: vehicle.id });
-                          setModalOpen(true);
-                        }}
-                        style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #2563eb", background: "white", color: "#2563eb", cursor: "pointer" }}
-                      >
-                        Complete Service
-                      </button>
+                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                        <button
+                          onClick={() => loadServiceHistory(vehicle.id, vehicle.vehicle)}
+                          style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #2563eb", background: "white", color: "#2563eb", cursor: "pointer" }}
+                        >
+                          Get History
+                        </button>
+                        <button
+                          onClick={() => {
+                            setModalError("");
+                            setForm({ ...form, vehicleId: vehicle.id });
+                            setModalOpen(true);
+                          }}
+                          style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #2563eb", background: "white", color: "#2563eb", cursor: "pointer" }}
+                        >
+                          Complete Service
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -136,6 +178,38 @@ export default function ServiceDashboard() {
           </table>
         </div>
       )}
+      {historyOpen && (
+        <div style={{ marginTop: "16px", border: "1px solid #e5e7eb", borderRadius: "6px", padding: "12px", background: "#f9fafb", color: "black" }}>
+          <h3 style={{ margin: "0 0 8px", fontSize: "14px" }}>
+            Service History Timeline{selectedVehicleName ? ` - ${selectedVehicleName}` : ""}
+          </h3>
+          {historyLoading && <p style={{ margin: 0 }}>Loading service history...</p>}
+          {historyError && <p style={{ margin: 0, color: "red" }}>{historyError}</p>}
+          {!historyLoading && !historyError && historyRecords.length === 0 && (
+            <p style={{ margin: 0 }}>No previous service records found.</p>
+          )}
+          {!historyLoading && !historyError && historyRecords.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {historyRecords.map((record) => (
+                <div key={record.id} style={{ borderTop: "1px solid #e5e7eb", paddingTop: "8px" }}>
+                  <div style={{ fontWeight: 600 }}>{record.serviceDate || "-"}</div>
+                  <div style={{ fontSize: "13px", color: "#4b5563" }}>
+                    <div>Type: {record.serviceType || "-"}</div>
+                    <div>Odometer: {record.odometerReading != null ? record.odometerReading : "-"}</div>
+                    <div>Service Center: {record.serviceCenter || "-"}</div>
+                    <div>Mechanic: {record.mechanicName || "-"}</div>
+                    <div>Cost: {record.cost != null ? record.cost : "-"}</div>
+                    <div>Notes: {record.notes || "-"}</div>
+                    <div>Next Service Date: {record.nextServiceDate || "-"}</div>
+                    <div>Next Service KM: {record.nextServiceKm != null ? record.nextServiceKm : "-"}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {modalOpen && (
         <div
           style={{
@@ -157,11 +231,17 @@ export default function ServiceDashboard() {
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
+                if (submittingRef.current) return;
+
                 setModalError("");
+                submittingRef.current = true;
+                setIsSubmitting(true);
 
                 // simple validation
                 if (!form.vehicleId || !form.serviceTypeId || !form.serviceDate || form.odometerReading === "") {
                   setModalError("Please fill required fields.");
+                  submittingRef.current = false;
+                  setIsSubmitting(false);
                   return;
                 }
 
@@ -200,6 +280,9 @@ export default function ServiceDashboard() {
                   loadData();
                 } catch (err) {
                   setModalError(err.message || "Failed to complete service.");
+                } finally {
+                  submittingRef.current = false;
+                  setIsSubmitting(false);
                 }
               }}
             >
@@ -242,8 +325,12 @@ export default function ServiceDashboard() {
                   <button type="button" onClick={() => setModalOpen(false)} style={{ padding: "6px 10px" }}>
                     Cancel
                   </button>
-                  <button type="submit" style={{ padding: "6px 10px", background: "#2563eb", color: "white", border: "none" }}>
-                    Submit
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    style={{ padding: "6px 10px", background: isSubmitting ? "#93c5fd" : "#2563eb", color: "white", border: "none", cursor: isSubmitting ? "not-allowed" : "pointer" }}
+                  >
+                    {isSubmitting ? "Submitting..." : "Submit"}
                   </button>
                 </div>
               </div>
