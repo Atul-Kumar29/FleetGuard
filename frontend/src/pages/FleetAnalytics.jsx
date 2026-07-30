@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getFleetAnalyticsMetrics } from '../services/fleetAnalyticsApi';
+import { getPredictiveMaintenanceReport } from '../services/predictiveMaintenanceApi';
 import MetricCard from '../components/MetricCard';
+import FleetAnalyticsCharts from '../components/charts/FleetAnalyticsCharts';
 import { 
   RefreshCw, 
   Truck, 
@@ -13,28 +15,36 @@ import {
 
 export default function FleetAnalytics() {
   const [metrics, setMetrics] = useState(null);
+  const [predictiveData, setPredictiveData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchMetrics = async () => {
-    setLoading(true);
+  const fetchMetrics = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
-      const data = await getFleetAnalyticsMetrics();
-      setMetrics(data);
+      const [metricsData, predictiveRes] = await Promise.all([
+        getFleetAnalyticsMetrics(),
+        getPredictiveMaintenanceReport()
+      ]);
+      setMetrics(metricsData);
+      setPredictiveData(predictiveRes || []);
     } catch (err) {
-      setError(err.message || 'Failed to retrieve fleet analytics metrics.');
+      setError(err.message || 'Unable to load analytics.');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void fetchMetrics();
-    }, 0);
+    void fetchMetrics(true);
 
-    return () => clearTimeout(timer);
+    // Polling refresh loop every 30 seconds
+    const interval = setInterval(() => {
+      void fetchMetrics(false);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Format currency helper
@@ -92,45 +102,49 @@ export default function FleetAnalytics() {
           </div>
         </div>
       ) : metrics ? (
-        /* Metrics Grid */
-        <div className="grid grid-cols-1  sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <MetricCard
-            title="Total Vehicles"
-            value={metrics.totalVehicles}
-            icon={<Truck className="w-6 h-6" />}
-            color="sky"
-            
-          />
-          <MetricCard
-            title="Compliant Vehicles"
-            value={metrics.compliantVehicles}
-            icon={<CheckCircle2 className="w-6 h-6" />}
-            color="emerald"
-          />
-          <MetricCard
-            title="Expired Vehicles"
-            value={metrics.expiredVehicles}
-            icon={<ShieldAlert className="w-6 h-6" />}
-            color="rose"
-          />
-          <MetricCard
-            title="Upcoming Expiry"
-            value={metrics.upcomingExpiryVehicles}
-            icon={<AlertTriangle className="w-6 h-6" />}
-            color="amber"
-          />
-          <MetricCard
-            title="Total Maintenance Cost"
-            value={formatCurrency(metrics.totalMaintenanceCost)}
-            icon={<CircleDollarSign className="w-6 h-6" />}
-            color="violet"
-          />
-          <MetricCard
-            title="High-Risk Vehicles"
-            value={metrics.highRiskVehicles}
-            icon={<AlertOctagon className="w-6 h-6" />}
-            color="red"
-          />
+        <div className="space-y-8">
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <MetricCard
+              title="Total Vehicles"
+              value={metrics.totalVehicles}
+              icon={<Truck className="w-6 h-6" />}
+              color="sky"
+            />
+            <MetricCard
+              title="Compliant Vehicles"
+              value={metrics.compliantVehicles}
+              icon={<CheckCircle2 className="w-6 h-6" />}
+              color="emerald"
+            />
+            <MetricCard
+              title="Expired Vehicles"
+              value={metrics.expiredVehicles}
+              icon={<ShieldAlert className="w-6 h-6" />}
+              color="rose"
+            />
+            <MetricCard
+              title="Upcoming Expiry"
+              value={metrics.upcomingExpiryVehicles}
+              icon={<AlertTriangle className="w-6 h-6" />}
+              color="amber"
+            />
+            <MetricCard
+              title="Total Maintenance Cost"
+              value={formatCurrency(metrics.totalMaintenanceCost)}
+              icon={<CircleDollarSign className="w-6 h-6" />}
+              color="violet"
+            />
+            <MetricCard
+              title="High-Risk Vehicles"
+              value={metrics.highRiskVehicles}
+              icon={<AlertOctagon className="w-6 h-6" />}
+              color="red"
+            />
+          </div>
+
+          {/* Fleet Analytics Visualizations */}
+          <FleetAnalyticsCharts metrics={metrics} predictiveData={predictiveData} />
         </div>
       ) : null}
     </div>
