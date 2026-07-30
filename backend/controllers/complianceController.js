@@ -3,6 +3,7 @@ const { calculateComplianceStatus } = require('../services/complianceStatus');
 
 const DOCUMENT_TYPE_ALIASES = Object.freeze({
   INSURANCE: 'INSURANCE',
+  REGISTRATION: 'REGISTRATION',
   INSPECTION: 'SAFETY_INSPECTION',
   SAFETY_INSPECTION: 'SAFETY_INSPECTION',
   EMISSIONS: 'EMISSIONS',
@@ -27,7 +28,7 @@ function validateCompliancePayload(payload, { creating = false } = {}) {
 
   if (creating && !payload.vehicle_id) errors.push('Vehicle ID is required.');
   if ((creating || payload.document_type !== undefined) && !documentType) {
-    errors.push('Document type must be INSURANCE, INSPECTION, or EMISSIONS.');
+    errors.push('Document type must be INSURANCE, REGISTRATION, INSPECTION, or EMISSIONS.');
   }
   if (creating && !payload.expiration_date) errors.push('Expiration date is required.');
   if (payload.expiration_date !== undefined && !isValidDate(payload.expiration_date)) errors.push('Expiration date must use the YYYY-MM-DD format.');
@@ -55,7 +56,7 @@ async function createComplianceDocument(req, res) {
     const { errors, data } = validateCompliancePayload(req.body || {}, { creating: true });
     if (errors.length > 0) return res.status(400).json({ error: 'Validation failed.', details: errors });
 
-    const supabase = getSupabaseClient();
+    const supabase = req.supabase || getSupabaseClient();
     const { data: vehicle, error: vehicleError } = await supabase
       .from('vehicles')
       .select('id')
@@ -116,7 +117,7 @@ async function updateComplianceDocument(req, res) {
     }
 
     updatePayload.last_verified_at = new Date().toISOString();
-    const supabase = getSupabaseClient();
+    const supabase = req.supabase || getSupabaseClient();
     const { data: updated, error } = await supabase
       .from('compliance_items')
       .update(updatePayload)

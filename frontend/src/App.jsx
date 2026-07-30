@@ -11,7 +11,7 @@ import PredictiveMaintenance from './pages/PredictiveMaintenance';
 import FleetAnalytics from './pages/FleetAnalytics';
 import AdminDashboard from './pages/AdminDashboard';
 import NotificationPage from './pages/NotificationPage';
-
+import ServiceDashboard from './pages/ServiceDashboard';
 function AppContent() {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -61,14 +61,14 @@ function AppContent() {
         </ProtectedRoute>
       )}
 
-      {currentPage === 'my-vehicles' && (
+      {/* {currentPage === 'my-vehicles' && (
         <ProtectedRoute allowedRoles={['DRIVER']}>
           <div className="page-content">
             <h2>My Assigned Vehicles</h2>
             <p>Coming soon: View vehicles assigned to you</p>
           </div>
         </ProtectedRoute>
-      )}
+      )} */}
 
       {currentPage === 'compliance' && (
         <ProtectedRoute allowedRoles={['DRIVER']}>
@@ -81,10 +81,7 @@ function AppContent() {
 
       {currentPage === 'services' && (
         <ProtectedRoute allowedRoles={['MECHANIC', 'ADMIN']}>
-          <div className="page-content">
-            <h2>Service Logs</h2>
-            <p>Coming soon: Manage service records</p>
-          </div>
+          <ServiceDashboard />
         </ProtectedRoute>
       )}
 

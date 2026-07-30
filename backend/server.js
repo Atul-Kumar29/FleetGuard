@@ -9,6 +9,7 @@ const complianceRoutes = require('./routes/complianceRoutes');
 const serviceRoutes = require('./routes/serviceRoutes'); 
 const predictiveMaintenanceRoutes = require('./routes/predictiveMaintenance.routes');
 const fleetAnalyticsRoutes = require('./routes/fleetAnalytics.routes');
+const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 
@@ -20,6 +21,7 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use('/api/auth', authRoutes);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {

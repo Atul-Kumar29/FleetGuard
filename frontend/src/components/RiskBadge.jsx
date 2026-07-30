@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * Renders a modern, visually striking status badge indicating maintenance risk levels.
  * 

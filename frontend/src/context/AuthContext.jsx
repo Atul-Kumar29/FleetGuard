@@ -1,28 +1,25 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext } from 'react';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Try to restore user from localStorage on mount
+  const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem('fleetguard_user');
     const token = localStorage.getItem('fleetguard_token');
-    
+
     if (storedUser && token) {
       try {
-        setUser(JSON.parse(storedUser));
+        return JSON.parse(storedUser);
       } catch (err) {
         console.error('Failed to parse stored user:', err);
         localStorage.removeItem('fleetguard_user');
         localStorage.removeItem('fleetguard_token');
       }
     }
-    
-    setLoading(false);
-  }, []);
+
+    return null;
+  });
+  const loading = false;
 
   const login = (userData, token) => {
     setUser(userData);
@@ -43,6 +40,7 @@ export function AuthProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
