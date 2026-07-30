@@ -9,6 +9,8 @@ import FleetListPage from './pages/FleetListPage';
 import VehicleDetailsPage from './pages/VehicleDetailsPage';
 import PredictiveMaintenance from './pages/PredictiveMaintenance';
 import FleetAnalytics from './pages/FleetAnalytics';
+import AdminDashboard from './pages/AdminDashboard';
+import NotificationPage from './pages/NotificationPage';
 import ServiceDashboard from './pages/ServiceDashboard';
 function AppContent() {
   const { user } = useAuth();
@@ -67,11 +69,6 @@ function AppContent() {
           </div>
         </ProtectedRoute>
       )} */}
-      {currentPage === 'services' && (
-  <ProtectedRoute allowedRoles={['MECHANIC', 'ADMIN']}>
-    <ServiceDashboard />
-  </ProtectedRoute>
-)}
 
       {currentPage === 'compliance' && (
         <ProtectedRoute allowedRoles={['DRIVER']}>
@@ -84,10 +81,7 @@ function AppContent() {
 
       {currentPage === 'services' && (
         <ProtectedRoute allowedRoles={['MECHANIC', 'ADMIN']}>
-          <div className="page-content">
-            <h2>Service Logs</h2>
-            <p>Coming soon: Manage service records</p>
-          </div>
+          <ServiceDashboard />
         </ProtectedRoute>
       )}
 
@@ -105,10 +99,13 @@ function AppContent() {
 
       {currentPage === 'admin' && (
         <ProtectedRoute allowedRoles={['ADMIN']}>
-          <div className="page-content">
-            <h2>Admin Panel</h2>
-            <p>Coming soon: Administrative tools</p>
-          </div>
+          <AdminDashboard />
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'notifications' && (
+        <ProtectedRoute allowedRoles={['ADMIN']}>
+          <NotificationPage />
         </ProtectedRoute>
       )}
     </MainLayout>
