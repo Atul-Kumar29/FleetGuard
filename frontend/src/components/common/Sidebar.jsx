@@ -82,6 +82,13 @@ export default function Sidebar({ currentPage, onNavigate, onLogout }) {
         icon: '⚙️',
         roles: ['ADMIN'],
       });
+
+      baseItems.push({
+        id: 'notifications',
+        label: 'Notifications',
+        icon: '🔔',
+        roles: ['ADMIN'],
+      });
     }
 
     return baseItems;

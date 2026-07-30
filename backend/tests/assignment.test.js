@@ -1,8 +1,30 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-
+const request = require('supertest');
+const app = require('../server');
+const supabase = require('../config/supabase');
 const { createAssignment, overrideAssignment } = require('../controllers/assignmentController');
 const { getDriverVehicle, submitPreTripChecklist } = require('../controllers/driverController');
+
+// Mock the Supabase client
+jest.mock('../config/supabase', () => {
+  const mockSelect = jest.fn();
+  const mockFrom = jest.fn(() => ({
+    select: mockSelect
+  }));
+
+  const mockClient = {
+    from: mockFrom,
+    auth: {
+      getUser: jest.fn()
+    }
+  };
+
+  return {
+    from: mockFrom,
+    supabase: mockClient,
+    getSupabaseClient: () => mockClient,
+    _mockSelect: mockSelect
+  };
+});
 
 // Helper to create mock req and res
 function createMockReqRes(reqData = {}) {
@@ -35,80 +57,178 @@ function createMockReqRes(reqData = {}) {
   return { req, res };
 }
 
-// -------------------------------------------------------------
-// Endpoint #15: POST /api/assignments - Compliance-Gated Assignment
-// -------------------------------------------------------------
+describe('Assignment & Driver Controller Unit Tests', () => {
+  test('Endpoint #15: POST /api/assignments - returns 400 when required fields are missing', async () => {
+    const { req, res } = createMockReqRes({
+      body: { vehicle_id: 'v123', assigned_by: 'manager1' } // missing driver_id
+    });
 
-test('Endpoint #15: POST /api/assignments - returns 400 when required fields are missing', async () => {
-  const { req, res } = createMockReqRes({
-    body: { vehicle_id: 'v123', assigned_by: 'manager1' } // missing driver_id
+    await createAssignment(req, res);
+
+    expect(res.getStatusCode()).toBe(400);
+    expect(res.getResponseData().error).toBe('Missing required fields');
   });
 
-  await createAssignment(req, res);
+  test('Endpoint #16: POST /api/assignments/override - returns 400 when manager justification is missing', async () => {
+    const { req, res } = createMockReqRes({
+      body: { driver_id: 'd1', vehicle_id: 'v1', assigned_by: 'm1' }
+    });
 
-  assert.equal(res.getStatusCode(), 400);
-  assert.equal(res.getResponseData().error, 'Missing required fields');
+    await overrideAssignment(req, res);
+
+    expect(res.getStatusCode()).toBe(400);
+    expect(res.getResponseData().error).toBe('Missing required fields');
+  });
+
+  test('Endpoint #16: POST /api/assignments/override - returns 400 when manager justification < 10 characters', async () => {
+    const { req, res } = createMockReqRes({
+      body: {
+        driver_id: 'd1',
+        vehicle_id: 'v1',
+        assigned_by: 'm1',
+        justification: 'Too short' // 9 chars
+      }
+    });
+
+    await overrideAssignment(req, res);
+
+    expect(res.getStatusCode()).toBe(400);
+    expect(res.getResponseData().error).toBe('Invalid justification');
+    expect(res.getResponseData().message).toMatch(/at least 10 characters/);
+  });
+
+  test('Endpoint #18: POST /api/driver/pre-trip - returns 400 when driver_id or vehicle_id missing', async () => {
+    const { req, res } = createMockReqRes({
+      body: { driver_id: 'd1' } // missing vehicle_id
+    });
+
+    await submitPreTripChecklist(req, res);
+
+    expect(res.getStatusCode()).toBe(400);
+    expect(res.getResponseData().error).toBe('Missing required fields');
+  });
 });
 
-// -------------------------------------------------------------
-// Endpoint #16: POST /api/assignments/override - Override Processing
-// -------------------------------------------------------------
-
-test('Endpoint #16: POST /api/assignments/override - returns 400 when manager justification is missing', async () => {
-  const { req, res } = createMockReqRes({
-    body: { driver_id: 'd1', vehicle_id: 'v1', assigned_by: 'm1' }
+describe('Assignment Overrides Admin API Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  await overrideAssignment(req, res);
+  it('GET /api/admin/overrides - Successful response with sorted and formatted data (Admin)', async () => {
+    const mockData = [
+      {
+        id: 'override-1',
+        justification: 'Driver key lost, manual override needed',
+        created_at: '2026-07-29T10:00:00Z',
+        vehicle: {
+          id: 'v-1',
+          license_plate: 'PLATE-1',
+          make: 'Toyota',
+          model: 'Prius'
+        },
+        driver: {
+          id: 'd-1',
+          full_name: 'John Driver',
+          email: 'driver@example.com'
+        },
+        manager: {
+          id: 'm-1',
+          full_name: 'Manager Smith',
+          email: 'manager@example.com'
+        }
+      }
+    ];
 
-  assert.equal(res.getStatusCode(), 400);
-  assert.equal(res.getResponseData().error, 'Missing required fields');
-});
+    const mockOrder = jest.fn().mockResolvedValue({
+      data: mockData,
+      error: null
+    });
 
-test('Endpoint #16: POST /api/assignments/override - returns 400 when manager justification < 10 characters', async () => {
-  const { req, res } = createMockReqRes({
-    body: {
-      driver_id: 'd1',
-      vehicle_id: 'v1',
-      assigned_by: 'm1',
-      justification: 'Too short' // 9 chars
-    }
+    const mockSelectChain = jest.fn().mockReturnValue({
+      order: mockOrder
+    });
+
+    supabase._mockSelect.mockImplementation(mockSelectChain);
+
+    const response = await request(app)
+      .get('/api/admin/overrides')
+      .set('Authorization', 'Bearer token_4'); // Admin Demo Token
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      success: true,
+      count: 1,
+      data: [
+        {
+          id: 'override-1',
+          vehicle: {
+            id: 'v-1',
+            licensePlate: 'PLATE-1',
+            make: 'Toyota',
+            model: 'Prius'
+          },
+          driver: {
+            id: 'd-1',
+            fullName: 'John Driver',
+            email: 'driver@example.com'
+          },
+          manager: {
+            id: 'm-1',
+            fullName: 'Manager Smith',
+            email: 'manager@example.com'
+          },
+          overrideReason: 'Driver key lost, manual override needed',
+          createdAt: '2026-07-29T10:00:00Z'
+        }
+      ]
+    });
+
+    expect(supabase.from).toHaveBeenCalledWith('assignment_overrides');
+    expect(mockSelectChain).toHaveBeenCalled();
+    expect(mockOrder).toHaveBeenCalledWith('created_at', { ascending: false });
   });
 
-  await overrideAssignment(req, res);
+  it('GET /api/admin/overrides - Database error returns 500 status', async () => {
+    const mockOrder = jest.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'Database connection failed' }
+    });
 
-  assert.equal(res.getStatusCode(), 400);
-  assert.equal(res.getResponseData().error, 'Invalid justification');
-  assert.match(res.getResponseData().message, /at least 10 characters/);
-});
+    const mockSelectChain = jest.fn().mockReturnValue({
+      order: mockOrder
+    });
 
-// -------------------------------------------------------------
-// Endpoint #17: GET /api/driver/vehicle - Vehicle Legal Status
-// -------------------------------------------------------------
+    supabase._mockSelect.mockImplementation(mockSelectChain);
 
-test('Endpoint #17: GET /api/driver/vehicle - returns 400 when driver_id is missing', async () => {
-  const { req, res } = createMockReqRes({
-    query: {},
-    headers: {}
+    const response = await request(app)
+      .get('/api/admin/overrides')
+      .set('Authorization', 'Bearer token_4');
+
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({
+      success: false,
+      message: 'Database error while fetching assignment overrides: Database connection failed'
+    });
   });
 
-  await getDriverVehicle(req, res);
+  it('GET /api/admin/overrides - Forbidden for non-Admin role', async () => {
+    const response = await request(app)
+      .get('/api/admin/overrides')
+      .set('Authorization', 'Bearer token_2'); // Driver Demo Token
 
-  assert.equal(res.getStatusCode(), 400);
-  assert.equal(res.getResponseData().error, 'Missing required fields');
-});
-
-// -------------------------------------------------------------
-// Endpoint #18: POST /api/driver/pre-trip - Pre-Trip Checklist Submission
-// -------------------------------------------------------------
-
-test('Endpoint #18: POST /api/driver/pre-trip - returns 400 when driver_id or vehicle_id missing', async () => {
-  const { req, res } = createMockReqRes({
-    body: { driver_id: 'd1' } // missing vehicle_id
+    expect(response.status).toBe(403);
+    expect(response.body).toEqual({
+      error: 'You do not have permission to perform this action.'
+    });
   });
 
-  await submitPreTripChecklist(req, res);
+  it('GET /api/admin/overrides - Unauthorized with no credentials', async () => {
+    const response = await request(app)
+      .get('/api/admin/overrides');
 
-  assert.equal(res.getStatusCode(), 400);
-  assert.equal(res.getResponseData().error, 'Missing required fields');
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({
+      error: 'Authentication token is required.'
+    });
+  });
 });

@@ -137,6 +137,21 @@ export async function createCompliance(document) {
   return data;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//vikas service code 
 export async function getServiceQueue(search = "", status = "all", sort = "due_date") {
   const response = await fetch(
     `${API_BASE_URL}/api/services/queue?search=${encodeURIComponent(search)}&status=${status}&sort=${sort}`,
@@ -188,6 +203,21 @@ export async function getDrivers() {
   return data;
 }
 
+export async function getServiceHistory(vehicleId) {
+  const response = await fetch(`${API_BASE_URL}/api/services/history/${vehicleId}`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to fetch service history.'));
+  }
+
+  return data;
+}
+
 export async function createAssignment(payload) {
   const response = await fetch(`${API_BASE_URL}/api/assignments`, {
     method: 'POST',
@@ -201,6 +231,25 @@ export async function createAssignment(payload) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const errorObj = new Error(getApiError(data, 'Unable to create driver assignment.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
+export async function getAssignmentOverrides() {
+  const response = await fetch(`${API_BASE_URL}/api/admin/overrides`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to fetch assignment overrides.'));
     errorObj.data = data;
     throw errorObj;
   }

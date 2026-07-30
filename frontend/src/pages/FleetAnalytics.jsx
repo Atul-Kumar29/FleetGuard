@@ -93,12 +93,13 @@ export default function FleetAnalytics() {
         </div>
       ) : metrics ? (
         /* Metrics Grid */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1  sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <MetricCard
             title="Total Vehicles"
             value={metrics.totalVehicles}
             icon={<Truck className="w-6 h-6" />}
             color="sky"
+            
           />
           <MetricCard
             title="Compliant Vehicles"
