@@ -10,6 +10,8 @@ export default function ServiceDashboard() {
   const [sort, setSort] = useState("due_date");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalError, setModalError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [modalMode, setModalMode] = useState("complete");
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
   const [historyRecords, setHistoryRecords] = useState([]);
@@ -17,7 +19,7 @@ export default function ServiceDashboard() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const [form, setForm] = useState({
+  const getEmptyForm = () => ({
     vehicleId: "",
     serviceTypeId: "",
     serviceDate: "",
@@ -29,6 +31,8 @@ export default function ServiceDashboard() {
     nextServiceDate: "",
     nextServiceKm: "",
   });
+
+  const [form, setForm] = useState(getEmptyForm());
 
   const loadData = async () => {
     setLoading(true);
@@ -162,12 +166,26 @@ export default function ServiceDashboard() {
                         <button
                           onClick={() => {
                             setModalError("");
-                            setForm({ ...form, vehicleId: vehicle.id });
+                            setSuccessMessage("");
+                            setModalMode("complete");
+                            setForm({ ...getEmptyForm(), vehicleId: vehicle.id });
                             setModalOpen(true);
                           }}
                           style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #2563eb", background: "white", color: "#2563eb", cursor: "pointer" }}
                         >
                           Complete Service
+                        </button>
+                        <button
+                          onClick={() => {
+                            setModalError("");
+                            setSuccessMessage("");
+                            setModalMode("history");
+                            setForm({ ...getEmptyForm(), vehicleId: vehicle.id });
+                            setModalOpen(true);
+                          }}
+                          style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #2563eb", background: "white", color: "#2563eb", cursor: "pointer" }}
+                        >
+                          Add Historical Record
                         </button>
                       </div>
                     </td>
@@ -226,14 +244,16 @@ export default function ServiceDashboard() {
           }}
         >
           <div style={{ background: "white", padding: "18px", width: "420px", borderRadius: "6px", color: "black" }}>
-            <h2 style={{ marginTop: 0 }}>Complete Service</h2>
+            <h2 style={{ marginTop: 0 }}>{modalMode === "history" ? "Historical Service Record" : "Complete Service"}</h2>
             {modalError && <p style={{ color: "red" }}>{modalError}</p>}
+            {successMessage && <p style={{ color: "green" }}>{successMessage}</p>}
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
                 if (submittingRef.current) return;
 
                 setModalError("");
+                setSuccessMessage("");
                 submittingRef.current = true;
                 setIsSubmitting(true);
 
@@ -264,19 +284,8 @@ export default function ServiceDashboard() {
 
                   await postCompleteService(payload);
 
-                  setModalOpen(false);
-                  setForm({
-                    vehicleId: "",
-                    serviceTypeId: "",
-                    serviceDate: "",
-                    odometerReading: "",
-                    serviceCenter: "",
-                    mechanicName: "",
-                    cost: "",
-                    notes: "",
-                    nextServiceDate: "",
-                    nextServiceKm: "",
-                  });
+                  setForm(getEmptyForm());
+                  setSuccessMessage("Service record saved successfully.");
                   loadData();
                 } catch (err) {
                   setModalError(err.message || "Failed to complete service.");
@@ -287,6 +296,16 @@ export default function ServiceDashboard() {
               }}
             >
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label>Vehicle (required)</label>
+                <select value={form.vehicleId} onChange={(e) => setForm({ ...form, vehicleId: e.target.value })}>
+                  <option value="">Select vehicle</option>
+                  {vehicles.map((vehicleOption) => (
+                    <option key={vehicleOption.id} value={vehicleOption.id}>
+                      {vehicleOption.licensePlate} - {vehicleOption.vehicle}
+                    </option>
+                  ))}
+                </select>
+
                 <label>Service Type (required)</label>
                 <select value={form.serviceTypeId} onChange={(e) => setForm({ ...form, serviceTypeId: e.target.value })}>
                   <option value="">Select type</option>
