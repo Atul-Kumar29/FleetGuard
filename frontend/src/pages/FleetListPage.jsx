@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getFleetList } from '../services/api';
+import AssignDriverDrawer from '../components/common/AssignDriverDrawer';
 
 function getStatusColor(status) {
   switch (status) {
@@ -29,21 +30,23 @@ export default function FleetListPage({ onSelectVehicle }) {
     search: '',
   });
   const [pagination, setPagination] = useState({ limit: 50, offset: 0, total: 0 });
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [targetVehicleForAssignment, setTargetVehicleForAssignment] = useState(null);
+
+  const loadFleet = async () => {
+    try {
+      setLoading(true);
+      const result = await getFleetList(filters);
+      setVehicles(result.vehicles || []);
+      setPagination(result.pagination || { limit: 50, offset: 0, total: 0 });
+    } catch (err) {
+      setError(err.message || 'Unable to load fleet list.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadFleet() {
-      try {
-        setLoading(true);
-        const result = await getFleetList(filters);
-        setVehicles(result.vehicles || []);
-        setPagination(result.pagination || { limit: 50, offset: 0, total: 0 });
-      } catch (err) {
-        setError(err.message || 'Unable to load fleet list.');
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadFleet();
   }, [filters]);
 
@@ -56,14 +59,26 @@ export default function FleetListPage({ onSelectVehicle }) {
     event.preventDefault();
   };
 
+  const handleOpenAssignDrawer = (vehicle = null) => {
+    setTargetVehicleForAssignment(vehicle);
+    setIsDrawerOpen(true);
+  };
+
   return (
     <div className="fleet-page">
-      <div className="fleet-header">
+      <div className="fleet-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <p className="eyebrow">FleetGuard</p>
           <h1>Fleet Management</h1>
           <p className="subtitle">View and manage your registered vehicles</p>
         </div>
+        <button
+          className="btn-primary"
+          onClick={() => handleOpenAssignDrawer(null)}
+          style={{ height: 'fit-content' }}
+        >
+          + Assign Driver
+        </button>
       </div>
 
       <div className="fleet-filters">
@@ -117,7 +132,7 @@ export default function FleetListPage({ onSelectVehicle }) {
                   <th>Status</th>
                   <th>Compliance</th>
                   <th>Mileage</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -142,12 +157,21 @@ export default function FleetListPage({ onSelectVehicle }) {
                     </td>
                     <td>{vehicle.current_mileage.toLocaleString()} km</td>
                     <td>
-                      <button
-                        onClick={() => onSelectVehicle(vehicle.id)}
-                        className="view-btn"
-                      >
-                        View
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => onSelectVehicle(vehicle.id)}
+                          className="view-btn"
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => handleOpenAssignDrawer(vehicle)}
+                          className="view-btn"
+                          style={{ backgroundColor: '#2563eb', color: '#fff' }}
+                        >
+                          Assign
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -160,6 +184,14 @@ export default function FleetListPage({ onSelectVehicle }) {
           </div>
         </div>
       )}
+
+      <AssignDriverDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        vehicle={targetVehicleForAssignment}
+        vehicles={vehicles}
+        onSuccess={loadFleet}
+      />
     </div>
   );
 }

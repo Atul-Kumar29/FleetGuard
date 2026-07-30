@@ -1,6 +1,8 @@
 const request = require('supertest');
 const app = require('../server');
 const supabase = require('../config/supabase');
+const { createAssignment, overrideAssignment } = require('../controllers/assignmentController');
+const { getDriverVehicle, submitPreTripChecklist } = require('../controllers/driverController');
 
 // Mock the Supabase client
 jest.mock('../config/supabase', () => {
@@ -22,6 +24,89 @@ jest.mock('../config/supabase', () => {
     getSupabaseClient: () => mockClient,
     _mockSelect: mockSelect
   };
+});
+
+// Helper to create mock req and res
+function createMockReqRes(reqData = {}) {
+  let statusCode = 200;
+  let responseData = null;
+
+  const req = {
+    body: reqData.body || {},
+    query: reqData.query || {},
+    headers: reqData.headers || {}
+  };
+
+  const res = {
+    status(code) {
+      statusCode = code;
+      return this;
+    },
+    json(data) {
+      responseData = data;
+      return this;
+    },
+    getStatusCode() {
+      return statusCode;
+    },
+    getResponseData() {
+      return responseData;
+    }
+  };
+
+  return { req, res };
+}
+
+describe('Assignment & Driver Controller Unit Tests', () => {
+  test('Endpoint #15: POST /api/assignments - returns 400 when required fields are missing', async () => {
+    const { req, res } = createMockReqRes({
+      body: { vehicle_id: 'v123', assigned_by: 'manager1' } // missing driver_id
+    });
+
+    await createAssignment(req, res);
+
+    expect(res.getStatusCode()).toBe(400);
+    expect(res.getResponseData().error).toBe('Missing required fields');
+  });
+
+  test('Endpoint #16: POST /api/assignments/override - returns 400 when manager justification is missing', async () => {
+    const { req, res } = createMockReqRes({
+      body: { driver_id: 'd1', vehicle_id: 'v1', assigned_by: 'm1' }
+    });
+
+    await overrideAssignment(req, res);
+
+    expect(res.getStatusCode()).toBe(400);
+    expect(res.getResponseData().error).toBe('Missing required fields');
+  });
+
+  test('Endpoint #16: POST /api/assignments/override - returns 400 when manager justification < 10 characters', async () => {
+    const { req, res } = createMockReqRes({
+      body: {
+        driver_id: 'd1',
+        vehicle_id: 'v1',
+        assigned_by: 'm1',
+        justification: 'Too short' // 9 chars
+      }
+    });
+
+    await overrideAssignment(req, res);
+
+    expect(res.getStatusCode()).toBe(400);
+    expect(res.getResponseData().error).toBe('Invalid justification');
+    expect(res.getResponseData().message).toMatch(/at least 10 characters/);
+  });
+
+  test('Endpoint #18: POST /api/driver/pre-trip - returns 400 when driver_id or vehicle_id missing', async () => {
+    const { req, res } = createMockReqRes({
+      body: { driver_id: 'd1' } // missing vehicle_id
+    });
+
+    await submitPreTripChecklist(req, res);
+
+    expect(res.getStatusCode()).toBe(400);
+    expect(res.getResponseData().error).toBe('Missing required fields');
+  });
 });
 
 describe('Assignment Overrides Admin API Tests', () => {
@@ -54,7 +139,6 @@ describe('Assignment Overrides Admin API Tests', () => {
       }
     ];
 
-    // Configure the query chain mock
     const mockOrder = jest.fn().mockResolvedValue({
       data: mockData,
       error: null

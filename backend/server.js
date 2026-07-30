@@ -7,6 +7,8 @@ const path = require('path');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const complianceRoutes = require('./routes/complianceRoutes');
 const serviceRoutes = require('./routes/serviceRoutes'); 
+const assignmentRoutes = require('./routes/assignmentRoutes');
+const driverRoutes = require('./routes/driverRoutes');
 const predictiveMaintenanceRoutes = require('./routes/predictiveMaintenance.routes');
 const fleetAnalyticsRoutes = require('./routes/fleetAnalytics.routes');
 const authRoutes = require('./routes/authRoutes');
@@ -32,6 +34,8 @@ app.get('/health', (_req, res) => {
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/compliance', complianceRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/driver', driverRoutes);
 app.use('/api/admin', predictiveMaintenanceRoutes);
 app.use('/api/admin', fleetAnalyticsRoutes);
 app.use('/api/admin', adminRoutes);

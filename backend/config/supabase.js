@@ -26,6 +26,9 @@ function createSupabaseClient(accessToken) {
       persistSession: false,
       autoRefreshToken: false,
     },
+    realtime: {
+      transport: class DummyWebSocket {}
+    },
     // The service-role client is used only by this server after its own role
     // middleware authorizes the request. Without it, a real user JWT is
     // forwarded so Supabase RLS can evaluate auth.uid().
