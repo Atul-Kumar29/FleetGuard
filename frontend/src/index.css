@@ -1405,6 +1405,27 @@ button:disabled {
   width: 100%;
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.compliance-add-btn {
+  background: #2563eb;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 12px;
+}
+
+.compliance-add-btn:hover {
+  background: #1d4ed8;
+}
+
 .compliance-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1591,3 +1612,22 @@ button:disabled {
 }
 
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbars and transition defaults for smooth glassmorphism effects */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}

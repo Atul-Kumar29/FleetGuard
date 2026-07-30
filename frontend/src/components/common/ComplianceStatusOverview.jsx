@@ -15,13 +15,6 @@ export default function ComplianceStatusOverview({ compliance, onEdit }) {
     EXPIRED: compliance.filter((c) => c.status === 'EXPIRED').length,
   };
 
-  const overallStatus =
-    complianceSummary.EXPIRED > 0
-      ? 'EXPIRED'
-      : complianceSummary.WARNING > 0
-        ? 'WARNING'
-        : 'VALID';
-
   return (
     <div className="compliance-overview">
       <div className="compliance-summary">

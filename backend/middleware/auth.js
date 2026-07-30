@@ -1,46 +1,13 @@
 const { getSupabaseClient } = require('../config/supabase');
 
-const DEMO_USERS = [
-  { id: '1', email: 'manager@fleetguard.com', role: 'FLEET_MANAGER' },
-  { id: '2', email: 'driver@fleetguard.com', role: 'DRIVER' },
-  { id: '3', email: 'mechanic@fleetguard.com', role: 'MECHANIC' },
-  { id: '4', email: 'admin@fleetguard.com', role: 'ADMIN' },
-];
-
-function getDemoUserFromToken(token) {
-  if (typeof token !== 'string') {
-    return null;
-  }
-
-  const normalizedToken = token.trim();
-  const match = normalizedToken.match(/^token_([^_]+)(?:_.*)?$/i);
-  if (!match) {
-    return null;
-  }
-
-  const userId = match[1];
-  return DEMO_USERS.find((user) => user.id === userId) || null;
-}
-
 function requireRole(allowedRoles = []) {
   return async function authMiddleware(req, res, next) {
     try {
-      const authHeader = req.headers.authorization || req.headers.Authorization || '';
-      const token = authHeader.toString().startsWith('Bearer ') ? authHeader.slice(7) : authHeader.toString().startsWith('bearer ') ? authHeader.slice(7) : '';
-      const normalizedToken = token.trim();
+      const authHeader = req.headers.authorization || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
 
-      if (!normalizedToken) {
+      if (!token) {
         return res.status(401).json({ error: 'Authentication token is required.' });
-      }
-
-      const demoUser = getDemoUserFromToken(normalizedToken);
-      if (demoUser) {
-        if (allowedRoles.length > 0 && !allowedRoles.includes(demoUser.role)) {
-          return res.status(403).json({ error: 'You do not have permission to perform this action.' });
-        }
-
-        req.user = { ...demoUser };
-        return next();
       }
 
       const supabase = getSupabaseClient();
@@ -69,6 +36,9 @@ function requireRole(allowedRoles = []) {
         email: user.email,
         role: profile.role,
       };
+      // RLS policies in Supabase use auth.uid(). Keep the verified JWT on the
+      // database client so subsequent controller queries run as this user.
+      req.supabase = getSupabaseClient(token);
 
       next();
     } catch (error) {
