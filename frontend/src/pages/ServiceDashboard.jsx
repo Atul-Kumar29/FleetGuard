@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { getServiceHistory, getServiceQueue, postCompleteService } from "../services/api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getServiceHistory, getServiceQueue, getServiceTypes, postCompleteService } from "../services/api";
 
 export default function ServiceDashboard() {
   const [vehicles, setVehicles] = useState([]);
@@ -19,6 +19,9 @@ export default function ServiceDashboard() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const [serviceTypes, setServiceTypes] = useState([]);
+  const [serviceTypesLoading, setServiceTypesLoading] = useState(false);
+  const [serviceTypesError, setServiceTypesError] = useState("");
   const getEmptyForm = () => ({
     vehicleId: "",
     serviceTypeId: "",
@@ -34,7 +37,7 @@ export default function ServiceDashboard() {
 
   const [form, setForm] = useState(getEmptyForm());
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -46,7 +49,22 @@ export default function ServiceDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, status, sort]);
+
+  const loadServiceTypes = useCallback(async () => {
+    setServiceTypesLoading(true);
+    setServiceTypesError("");
+
+    try {
+      const result = await getServiceTypes();
+      setServiceTypes(Array.isArray(result) ? result : []);
+    } catch (err) {
+      setServiceTypesError(err.message || "Unable to load service types.");
+      setServiceTypes([]);
+    } finally {
+      setServiceTypesLoading(false);
+    }
+  }, []);
 
   const loadServiceHistory = async (vehicleId, vehicleLabel) => {
     if (!vehicleId) {
@@ -77,7 +95,8 @@ export default function ServiceDashboard() {
 
   useEffect(() => {
     loadData();
-  }, []);
+    loadServiceTypes();
+  }, [loadData, loadServiceTypes]);
 
   return (
     <div style={{ padding: "24px" }}>
@@ -307,13 +326,25 @@ export default function ServiceDashboard() {
                 </select>
 
                 <label>Service Type (required)</label>
-                <select value={form.serviceTypeId} onChange={(e) => setForm({ ...form, serviceTypeId: e.target.value })}>
-                  <option value="">Select type</option>
-                  <option value="37434345-ba1d-4a96-822c-7ac4fad87a0f">Oil Change</option>
-                  <option value="dae5298a-e7fb-4f3f-b6b4-7df5e9322acc">Brake Service</option>
-                  <option value="a5b9ca3a-930a-4dc9-b87d-7db3bb7572cd">Engine Service</option>
-                  <option value="0048519c-378e-4f44-998e-cad820616ad0">Tyre Rotation</option>
-                  <option value="6eac9e63-bd76-4e01-b3b5-afb602959e29">General Service</option>
+                {serviceTypesLoading && <p style={{ margin: 0, fontSize: "12px", color: "#4b5563" }}>Loading service types...</p>}
+                {serviceTypesError && <p style={{ margin: 0, fontSize: "12px", color: "red" }}>{serviceTypesError}</p>}
+                <select
+                  value={form.serviceTypeId}
+                  onChange={(e) => setForm({ ...form, serviceTypeId: e.target.value })}
+                  disabled={serviceTypesLoading}
+                >
+                  {serviceTypes.length === 0 ? (
+                    <option value="">No service types available</option>
+                  ) : (
+                    <>
+                      <option value="">Select service type</option>
+                      {serviceTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.service_name}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
 
                 <label>Service Date (required)</label>
