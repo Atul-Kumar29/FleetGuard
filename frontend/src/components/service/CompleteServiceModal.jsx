@@ -37,7 +37,11 @@ export default function CompleteServiceModal({
       <div style={{ background: "white", padding: "18px", width: "420px", borderRadius: "6px", color: "black" }}>
         <h2 style={{ marginTop: 0 }}>{modalMode === "history" ? "Historical Service Record" : "Complete Service"}</h2>
         {modalError && <p style={{ color: "red" }}>{modalError}</p>}
-        {successMessage && <p style={{ color: "green" }}>{successMessage}</p>}
+        {successMessage && (
+          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#166534", padding: "10px 12px", borderRadius: "6px", marginBottom: "12px", fontSize: "14px", whiteSpace: "pre-line" }}>
+            {successMessage}
+          </div>
+        )}
         <form onSubmit={onSubmit}>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <label>Vehicle (required)</label>

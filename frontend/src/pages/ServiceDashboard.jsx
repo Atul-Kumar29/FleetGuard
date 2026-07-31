@@ -169,9 +169,20 @@ export default function ServiceDashboard() {
 
       await postCompleteService(payload);
 
+      const selectedType = safeServiceTypes.find((t) => String(t.id) === String(form.serviceTypeId));
+      const typeName = (selectedType?.service_name || "").toLowerCase();
+      const clocks = ["Maintenance clock reset."];
+      if (typeName.includes("insurance")) clocks.push("Insurance compliance updated.");
+      if (typeName.includes("puc") || typeName.includes("emission")) clocks.push("PUC compliance updated.");
+      if (typeName.includes("fitness") || typeName.includes("inspection")) clocks.push("Fitness compliance updated.");
+
       setForm(getEmptyForm());
-      setSuccessMessage("Service record saved successfully.");
+      setSuccessMessage(`Service completed successfully.\n${clocks.join(" ")}`);
       loadData();
+
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 4000);
     } catch (err) {
       setModalError(err.message || "Failed to complete service.");
     } finally {
