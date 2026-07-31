@@ -13,14 +13,30 @@ export default function ServiceTypeDropdown({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={serviceTypesLoading}
+        style={{
+          width: "100%",
+          padding: "10px 12px",
+          borderRadius: "12px",
+          border: "1px solid #CBD5E1",
+          backgroundColor: "white",
+          color: "#0f172a",
+          fontSize: "14px",
+          appearance: "none",
+          WebkitAppearance: "none",
+          MozAppearance: "none",
+        }}
       >
         {serviceTypes.length === 0 ? (
-          <option value="">No service types available</option>
+          <option value="" style={{ color: "#0f172a" }}>
+            No service types available
+          </option>
         ) : (
           <>
-            <option value="">Select service type</option>
+            <option value="" style={{ color: "#0f172a" }}>
+              Select service type
+            </option>
             {serviceTypes.map((type) => (
-              <option key={type.id} value={type.id}>
+              <option key={type.id} value={type.id} style={{ color: "#0f172a" }}>
                 {type.service_name}
               </option>
             ))}
