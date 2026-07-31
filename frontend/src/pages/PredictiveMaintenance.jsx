@@ -4,6 +4,27 @@ import RiskBadge from '../components/RiskBadge';
 import SummaryCard from '../components/SummaryCard';
 import { RefreshCw, Search, Wrench, AlertTriangle, CheckCircle2, ShieldAlert, ArrowUpDown, Inbox } from 'lucide-react';
 
+/**
+ * Renders a badge showing whether a vehicle is actively being serviced
+ * by a mechanic (IN_MAINTENANCE) or running normally (ACTIVE).
+ */
+function ServiceStatusBadge({ vehicleStatus }) {
+  if (vehicleStatus === 'IN_MAINTENANCE') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">
+        <Wrench className="w-3.5 h-3.5 animate-pulse" />
+        In Service
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+      <CheckCircle2 className="w-3.5 h-3.5" />
+      Active
+    </span>
+  );
+}
+
 export default function PredictiveMaintenance() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,6 +32,7 @@ export default function PredictiveMaintenance() {
   const [searchQuery, setSearchQuery] = useState('');
   const [riskFilter, setRiskFilter] = useState('ALL');
   const [sortByDistance, setSortByDistance] = useState('NONE');
+  const [serviceFilter, setServiceFilter] = useState('ALL'); // ALL | IN_SERVICE | ACTIVE
 
   const fetchReport = async () => {
     setLoading(true);
@@ -30,16 +52,21 @@ export default function PredictiveMaintenance() {
     return () => clearTimeout(timer);
   }, []);
 
-  const totalVehicles = vehicles.length;
+  const totalVehicles   = vehicles.length;
   const lowRiskCount    = vehicles.filter(v => v.risk === 'LOW').length;
   const mediumRiskCount = vehicles.filter(v => v.risk === 'MEDIUM').length;
   const highRiskCount   = vehicles.filter(v => v.risk === 'HIGH').length;
+  const inServiceCount  = vehicles.filter(v => v.vehicleStatus === 'IN_MAINTENANCE').length;
 
   const processedVehicles = vehicles
     .filter(vehicle => {
       const matchesSearch = (vehicle.licensePlate || '').toLowerCase().includes(searchQuery.trim().toLowerCase());
-      const matchesRisk = riskFilter === 'ALL' || vehicle.risk === riskFilter;
-      return matchesSearch && matchesRisk;
+      const matchesRisk   = riskFilter === 'ALL' || vehicle.risk === riskFilter;
+      const matchesService =
+        serviceFilter === 'ALL' ||
+        (serviceFilter === 'IN_SERVICE' && vehicle.vehicleStatus === 'IN_MAINTENANCE') ||
+        (serviceFilter === 'ACTIVE'     && vehicle.vehicleStatus !== 'IN_MAINTENANCE');
+      return matchesSearch && matchesRisk && matchesService;
     })
     .sort((a, b) => {
       if (sortByDistance === 'ASC') return a.distanceSinceLastService - b.distanceSinceLastService;
@@ -62,7 +89,15 @@ export default function PredictiveMaintenance() {
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-1">FleetGuard</p>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Predictive Maintenance Engine</h1>
-          <p className="text-sm text-slate-500 mt-1">Monitor vehicle maintenance risk based on mileage and service logs.</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Monitor vehicle maintenance risk based on mileage and service logs.
+            {inServiceCount > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 text-amber-600 font-semibold">
+                <Wrench className="w-3.5 h-3.5 animate-pulse" />
+                {inServiceCount} vehicle{inServiceCount > 1 ? 's' : ''} currently being serviced.
+              </span>
+            )}
+          </p>
         </div>
         <button
           onClick={fetchReport}
@@ -75,11 +110,17 @@ export default function PredictiveMaintenance() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <SummaryCard title="Total Vehicles" value={loading ? '...' : totalVehicles}    icon={<Wrench className="w-5 h-5" />}      variant="primary" />
-        <SummaryCard title="Low Risk"       value={loading ? '...' : lowRiskCount}     icon={<CheckCircle2 className="w-5 h-5" />} variant="success" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <SummaryCard title="Total Vehicles" value={loading ? '...' : totalVehicles}    icon={<Wrench className="w-5 h-5" />}        variant="primary" />
+        <SummaryCard title="Low Risk"       value={loading ? '...' : lowRiskCount}     icon={<CheckCircle2 className="w-5 h-5" />}  variant="success" />
         <SummaryCard title="Medium Risk"    value={loading ? '...' : mediumRiskCount}  icon={<AlertTriangle className="w-5 h-5" />} variant="warning" />
-        <SummaryCard title="High Risk"      value={loading ? '...' : highRiskCount}    icon={<ShieldAlert className="w-5 h-5" />} variant="danger" />
+        <SummaryCard title="High Risk"      value={loading ? '...' : highRiskCount}    icon={<ShieldAlert className="w-5 h-5" />}   variant="danger" />
+        <SummaryCard
+          title="In Service Now"
+          value={loading ? '...' : inServiceCount}
+          icon={<Wrench className="w-5 h-5" />}
+          variant="warning"
+        />
       </div>
 
       {/* Filters */}
@@ -105,6 +146,14 @@ export default function PredictiveMaintenance() {
             </select>
           </div>
           <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">Service:</span>
+            <select value={serviceFilter} onChange={(e) => setServiceFilter(e.target.value)} className={`${inputClass} px-3 py-2`}>
+              <option value="ALL">All Vehicles</option>
+              <option value="IN_SERVICE">In Service Now</option>
+              <option value="ACTIVE">Active Only</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">Sort Distance:</span>
             <select value={sortByDistance} onChange={(e) => setSortByDistance(e.target.value)} className={`${inputClass} px-3 py-2`}>
               <option value="NONE">Unsorted</option>
@@ -115,7 +164,7 @@ export default function PredictiveMaintenance() {
         </div>
       </div>
 
-      {/* Data */}
+      {/* Data Table */}
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center gap-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
           <RefreshCw className="w-10 h-10 text-blue-500 animate-spin" />
@@ -156,13 +205,20 @@ export default function PredictiveMaintenance() {
                     </button>
                   </th>
                   <th className="px-5 py-3.5 text-xs font-extrabold text-slate-700 uppercase tracking-wide text-center">Risk Level</th>
+                  <th className="px-5 py-3.5 text-xs font-extrabold text-slate-700 uppercase tracking-wide text-center">
+                    Service Status
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {processedVehicles.map((vehicle) => {
                   const hasHistory = vehicle.lastServiceMileage > 0;
+                  const isInService = vehicle.vehicleStatus === 'IN_MAINTENANCE';
                   return (
-                    <tr key={vehicle.vehicleId} className="hover:bg-slate-50 transition-colors">
+                    <tr
+                      key={vehicle.vehicleId}
+                      className={`transition-colors ${isInService ? 'bg-amber-50/40' : 'hover:bg-slate-50'}`}
+                    >
                       <td className="px-5 py-4 font-mono font-bold text-blue-700">{vehicle.licensePlate}</td>
                       <td className="px-5 py-4">
                         <div className="font-bold text-slate-900">{vehicle.make}</div>
@@ -178,6 +234,9 @@ export default function PredictiveMaintenance() {
                       </td>
                       <td className="px-5 py-4 text-right font-mono font-bold text-slate-900">{vehicle.distanceSinceLastService.toLocaleString()} km</td>
                       <td className="px-5 py-4 text-center"><RiskBadge risk={vehicle.risk} /></td>
+                      <td className="px-5 py-4 text-center">
+                        <ServiceStatusBadge vehicleStatus={vehicle.vehicleStatus} />
+                      </td>
                     </tr>
                   );
                 })}

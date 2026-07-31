@@ -207,6 +207,24 @@ export async function postCompleteService(payload) {
   return data;
 }
 
+export async function postStartService(vehicleId) {
+  const response = await fetch(`${API_BASE_URL}/api/services/start`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("fleetguard_token") || ""}`,
+    },
+    body: JSON.stringify({ vehicleId }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, "Unable to start service."));
+  }
+
+  return data;
+}
+
 export async function getDrivers() {
   const response = await fetch(`${API_BASE_URL}/api/driver/list`, {
     headers: {
