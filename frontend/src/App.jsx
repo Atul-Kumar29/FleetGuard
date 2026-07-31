@@ -13,6 +13,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import NotificationPage from './pages/NotificationPage';
 import ServiceDashboard from './pages/ServiceDashboard';
 import DriverDashboard from './pages/DriverDashboard';
+import ReportsPage from './pages/ReportsPage';
 import { ArrowLeft } from 'lucide-react';
 function AppContent() {
   const { user } = useAuth();
@@ -99,6 +100,12 @@ function AppContent() {
       {currentPage === 'notifications' && (
         <ProtectedRoute allowedRoles={['ADMIN']}>
           <NotificationPage />
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'reports' && (
+        <ProtectedRoute allowedRoles={['ADMIN']}>
+          <ReportsPage />
         </ProtectedRoute>
       )}
     </MainLayout>
