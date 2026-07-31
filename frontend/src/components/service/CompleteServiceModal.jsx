@@ -19,6 +19,16 @@ export default function CompleteServiceModal({
     return null;
   }
 
+  const iStyle = {
+    border: "1px solid #cbd5e1",
+    borderRadius: "6px",
+    padding: "7px 10px",
+    width: "100%",
+    boxSizing: "border-box",
+    fontSize: "14px",
+    color: "#1e293b",
+  };
+
   return (
     <div
       style={{
@@ -45,7 +55,7 @@ export default function CompleteServiceModal({
         <form onSubmit={onSubmit}>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <label>Vehicle (required)</label>
-            <select value={form.vehicleId} onChange={(e) => onFormChange("vehicleId", e.target.value)}>
+            <select style={iStyle} value={form.vehicleId} onChange={(e) => onFormChange("vehicleId", e.target.value)}>
               <option value="">Select vehicle</option>
               {vehicles.map((vehicleOption) => (
                 <option key={vehicleOption.id} value={vehicleOption.id}>
@@ -64,28 +74,28 @@ export default function CompleteServiceModal({
             />
 
             <label>Service Date (required)</label>
-            <input type="date" value={form.serviceDate} onChange={(e) => onFormChange("serviceDate", e.target.value)} />
+            <input style={iStyle} type="date" value={form.serviceDate} onChange={(e) => onFormChange("serviceDate", e.target.value)} />
 
             <label>Odometer Reading (required)</label>
-            <input type="number" value={form.odometerReading} onChange={(e) => onFormChange("odometerReading", e.target.value)} />
+            <input style={iStyle} type="number" value={form.odometerReading} onChange={(e) => onFormChange("odometerReading", e.target.value)} />
 
             <label>Service Center</label>
-            <input type="text" value={form.serviceCenter} onChange={(e) => onFormChange("serviceCenter", e.target.value)} />
+            <input style={iStyle} type="text" value={form.serviceCenter} onChange={(e) => onFormChange("serviceCenter", e.target.value)} />
 
             <label>Mechanic Name</label>
-            <input type="text" value={form.mechanicName} onChange={(e) => onFormChange("mechanicName", e.target.value)} />
+            <input style={iStyle} type="text" value={form.mechanicName} onChange={(e) => onFormChange("mechanicName", e.target.value)} />
 
             <label>Cost</label>
-            <input type="number" step="0.01" value={form.cost} onChange={(e) => onFormChange("cost", e.target.value)} />
+            <input style={iStyle} type="number" step="0.01" value={form.cost} onChange={(e) => onFormChange("cost", e.target.value)} />
 
             <label>Notes</label>
-            <textarea value={form.notes} onChange={(e) => onFormChange("notes", e.target.value)} />
+            <textarea style={{...iStyle, resize: "vertical", minHeight: "72px"}} value={form.notes} onChange={(e) => onFormChange("notes", e.target.value)} />
 
             <label>Next Service Date</label>
-            <input type="date" value={form.nextServiceDate} onChange={(e) => onFormChange("nextServiceDate", e.target.value)} />
+            <input style={iStyle} type="date" value={form.nextServiceDate} onChange={(e) => onFormChange("nextServiceDate", e.target.value)} />
 
             <label>Next Service KM</label>
-            <input type="number" value={form.nextServiceKm} onChange={(e) => onFormChange("nextServiceKm", e.target.value)} />
+            <input style={iStyle} type="number" value={form.nextServiceKm} onChange={(e) => onFormChange("nextServiceKm", e.target.value)} />
 
             <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "8px" }}>
               <button type="button" onClick={onCancel} style={{ padding: "6px 10px" }}>

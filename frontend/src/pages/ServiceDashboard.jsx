@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import CompleteServiceModal from "../components/service/CompleteServiceModal";
 import ServiceFilters from "../components/service/ServiceFilters";
-import ServiceHistoryTimeline from "../components/service/ServiceHistoryTimeline";
 import ServiceQueueTable from "../components/service/ServiceQueueTable";
-import { getServiceHistory, getServiceQueue, getServiceTypes, postCompleteService } from "../services/api";
+import {
+  getServiceQueue,
+  getServiceTypes,
+  postCompleteService,
+  postStartService,
+} from "../services/api";
+import { Wrench, CheckCircle2, AlertCircle } from "lucide-react";
 
-export default function ServiceDashboard() {
+export default function ServiceDashboard({ onViewHistory }) {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -16,16 +21,20 @@ export default function ServiceDashboard() {
   const [modalError, setModalError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [modalMode, setModalMode] = useState("complete");
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [historyError, setHistoryError] = useState("");
-  const [historyRecords, setHistoryRecords] = useState([]);
-  const [selectedVehicleName, setSelectedVehicleName] = useState("");
-  const [historyOpen, setHistoryOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const [serviceTypes, setServiceTypes] = useState([]);
   const [serviceTypesLoading, setServiceTypesLoading] = useState(false);
   const [serviceTypesError, setServiceTypesError] = useState("");
+
+  // Toast notification state
+  const [toast, setToast] = useState(null); // { type: 'success' | 'error', message: string }
+
+  const showToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
+  };
+
   const getEmptyForm = () => ({
     vehicleId: "",
     serviceTypeId: "",
@@ -75,31 +84,9 @@ export default function ServiceDashboard() {
     }
   }, []);
 
-  const loadServiceHistory = async (vehicleId, vehicleLabel) => {
-    if (!vehicleId) {
-      setHistoryRecords([]);
-      setHistoryError("");
-      setSelectedVehicleName("");
-      setHistoryOpen(false);
-      return;
-    }
-
-    setHistoryLoading(true);
-    setHistoryError("");
-    setHistoryRecords([]);
-    setSelectedVehicleName(vehicleLabel || "");
-    setHistoryOpen(true);
-
-    try {
-      const result = await getServiceHistory(vehicleId);
-      const records = Array.isArray(result?.data) ? result.data : [];
-      records.sort((a, b) => new Date(b.serviceDate || 0) - new Date(a.serviceDate || 0));
-      setHistoryRecords(records);
-    } catch (err) {
-      setHistoryError(err.message || "Unable to load service history.");
-    } finally {
-      setHistoryLoading(false);
-    }
+  const loadServiceHistory = (vehicleId, vehicleLabel) => {
+    // Navigate to the dedicated history page instead of loading inline
+    if (onViewHistory) onViewHistory(vehicleId, vehicleLabel);
   };
 
   useEffect(() => {
@@ -132,6 +119,21 @@ export default function ServiceDashboard() {
     setModalMode("history");
     setForm({ ...getEmptyForm(), vehicleId });
     setModalOpen(true);
+  };
+
+  /**
+   * Handle "Start Service" button click.
+   * Marks the vehicle as IN_MAINTENANCE via the backend.
+   * The Predictive Maintenance page will immediately reflect this status.
+   */
+  const handleStartService = async (vehicleId, vehicleName) => {
+    try {
+      await postStartService(vehicleId);
+      showToast("success", `🔧 Service started for ${vehicleName || "vehicle"}. Status is now visible in Predictive Maintenance.`);
+      loadData(); // Refresh queue so the row shows "In Service" status
+    } catch (err) {
+      showToast("error", err.message || "Failed to start service.");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -193,10 +195,34 @@ export default function ServiceDashboard() {
 
   return (
     <div className="w-full max-w-7xl mx-auto flex flex-col gap-6">
+      {/* Header */}
       <div>
         <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-1">FleetGuard</p>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-4">Service Center Work Queue</h1>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-1">
+          Service Center Work Queue
+        </h1>
+        <p className="text-sm text-slate-900">
+          Press <span className="font-semibold text-emerald-600">Start Service</span> to begin work — status updates live in Predictive Maintenance.
+        </p>
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-sm font-medium shadow-sm transition-all ${
+            toast.type === "success"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+              : "bg-red-50 border-red-200 text-red-800"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+          )}
+          <span>{toast.message}</span>
+        </div>
+      )}
 
       <ServiceFilters
         search={search}
@@ -208,9 +234,18 @@ export default function ServiceDashboard() {
         onRefresh={loadData}
       />
 
-      {loading && <p>Loading service queue...</p>}
+      {loading && (
+        <div className="py-16 flex flex-col items-center justify-center gap-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
+          <Wrench className="w-8 h-8 text-blue-500 animate-spin" />
+          <p className="text-sm font-semibold text-slate-500">Loading service queue...</p>
+        </div>
+      )}
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm font-medium">
+          {error}
+        </div>
+      )}
 
       {!loading && !error && (
         <ServiceQueueTable
@@ -218,16 +253,10 @@ export default function ServiceDashboard() {
           onLoadHistory={loadServiceHistory}
           onCompleteService={openCompleteModal}
           onAddHistoricalRecord={openHistoryModal}
+          onStartService={handleStartService}
         />
       )}
 
-      <ServiceHistoryTimeline
-        historyOpen={historyOpen}
-        selectedVehicleName={selectedVehicleName}
-        historyLoading={historyLoading}
-        historyError={historyError}
-        historyRecords={historyRecords}
-      />
 
       <CompleteServiceModal
         modalOpen={modalOpen}

@@ -12,6 +12,7 @@ import FleetAnalytics from './pages/FleetAnalytics';
 import AdminDashboard from './pages/AdminDashboard';
 import NotificationPage from './pages/NotificationPage';
 import ServiceDashboard from './pages/ServiceDashboard';
+import ServiceHistoryPage from './pages/ServiceHistoryPage';
 import DriverDashboard from './pages/DriverDashboard';
 import ReportsPage from './pages/ReportsPage';
 import { ArrowLeft } from 'lucide-react';
@@ -19,6 +20,7 @@ function AppContent() {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
+  const [selectedServiceVehicle, setSelectedServiceVehicle] = useState({ id: null, name: '' });
 
   if (!user) {
     return <LoginPage onLoginSuccess={() => setCurrentPage('dashboard')} />;
@@ -37,6 +39,15 @@ function AppContent() {
   const handleBackToFleet = () => {
     setCurrentPage('fleet');
     setSelectedVehicleId(null);
+  };
+
+  const handleViewServiceHistory = (vehicleId, vehicleName) => {
+    setSelectedServiceVehicle({ id: vehicleId, name: vehicleName });
+    setCurrentPage('service-history');
+  };
+
+  const handleBackToServices = () => {
+    setCurrentPage('services');
   };
 
   return (
@@ -75,7 +86,17 @@ function AppContent() {
 
       {currentPage === 'services' && (
         <ProtectedRoute allowedRoles={['MECHANIC', 'FLEET_MANAGER', 'ADMIN']}>
-          <ServiceDashboard />
+          <ServiceDashboard onViewHistory={handleViewServiceHistory} />
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'service-history' && (
+        <ProtectedRoute allowedRoles={['MECHANIC', 'FLEET_MANAGER', 'ADMIN']}>
+          <ServiceHistoryPage
+            vehicleId={selectedServiceVehicle.id}
+            vehicleName={selectedServiceVehicle.name}
+            onBack={handleBackToServices}
+          />
         </ProtectedRoute>
       )}
 
