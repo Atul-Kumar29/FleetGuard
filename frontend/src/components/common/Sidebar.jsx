@@ -12,7 +12,8 @@ import {
   Bell,
   Shield,
   X,
-  LogOut
+  LogOut,
+  FileText
 } from 'lucide-react';
 
 export default function Sidebar({ currentPage, onNavigate, onLogout, onClose }) {
@@ -51,6 +52,7 @@ export default function Sidebar({ currentPage, onNavigate, onLogout, onClose }) 
     if (user.role === 'ADMIN') {
       baseItems.push({ id: 'admin', label: 'Admin Panel', icon: Settings, roles: ['ADMIN'] });
       baseItems.push({ id: 'notifications', label: 'Notifications', icon: Bell, roles: ['ADMIN'] });
+      baseItems.push({ id: 'reports', label: 'Export Reports', icon: FileText, roles: ['ADMIN'] });
     }
 
     return baseItems;
