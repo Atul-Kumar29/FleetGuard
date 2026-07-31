@@ -334,3 +334,22 @@ export async function postPreTripChecklist(payload) {
 
   return data;
 }
+
+export async function getAdminNotifications() {
+  const response = await fetch(`${API_BASE_URL}/api/admin/notifications`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to fetch notifications.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}

@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { getAdminNotifications } from '../services/api';
 
 export default function NotificationPage() {
   const [notifications, setNotifications] = useState([]);
@@ -12,25 +10,18 @@ export default function NotificationPage() {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('fleetguard_token') || '';
-      const response = await axios.get(`${API_BASE_URL}/api/admin/notifications`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      if (response.data && response.data.success) {
-        // Enforce newest notifications first sorting (backend already returns sorted, but this guarantees sorting)
-        const sorted = (response.data.data || []).sort(
+      const response = await getAdminNotifications();
+      if (response && response.success) {
+        // Enforce newest notifications first sorting
+        const sorted = (response.data || []).sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
         setNotifications(sorted);
       } else {
-        setError('Failed to load notifications.');
+        setError(response?.message || 'Failed to load notifications.');
       }
     } catch (err) {
-      setError('Failed to load notifications.');
+      setError(err.message || 'Failed to load notifications.');
     } finally {
       setLoading(false);
     }
