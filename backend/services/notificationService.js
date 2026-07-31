@@ -32,6 +32,29 @@ function toUtcDate(value) {
 }
 
 /**
+ * Helper to fetch vehicle license plates & details mapped by vehicle ID.
+ */
+async function getVehicleDetailsMap(client) {
+  try {
+    const { data: vehicles } = await client
+      .from('vehicles')
+      .select('id, license_plate, make, model');
+      
+    const map = new Map();
+    (vehicles || []).forEach(v => {
+      map.set(v.id, {
+        licensePlate: v.license_plate || v.id,
+        make: v.make || '',
+        model: v.model || ''
+      });
+    });
+    return map;
+  } catch (err) {
+    return new Map();
+  }
+}
+
+/**
  * Fetch and evaluate compliance exirations.
  * Generates CRITICAL notification if expired, WARNING notification if expiring within 7 days.
  */
