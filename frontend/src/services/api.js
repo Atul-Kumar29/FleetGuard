@@ -1,5 +1,40 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+function getApiError(data, fallback) {
+  const details = Array.isArray(data.details) ? data.details.join(' ') : data.details;
+  return details || data.error || data.message || fallback;
+}
+
+export async function loginWithSupabase(email, password) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to sign in.'));
+  }
+
+  return data;
+}
+
+export async function registerWithSupabase(email, password, fullName, role) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, full_name: fullName, role }),
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to sign up.'));
+  }
+
+  return data;
+}
+
 export async function registerVehicle(payload) {
   const response = await fetch(`${API_BASE_URL}/api/vehicles`, {
     method: 'POST',
@@ -13,7 +48,7 @@ export async function registerVehicle(payload) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || 'Unable to register vehicle.');
+    throw new Error(getApiError(data, 'Unable to register vehicle.'));
   }
 
   return data;
@@ -31,7 +66,7 @@ export async function getVehicleDetails(vehicleId) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || 'Unable to fetch vehicle details.');
+    throw new Error(getApiError(data, 'Unable to fetch vehicle details.'));
   }
 
   return data;
@@ -59,7 +94,7 @@ export async function getFleetList(filters = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || 'Unable to fetch fleet list.');
+    throw new Error(getApiError(data, 'Unable to fetch fleet list.'));
   }
 
   return data;
@@ -78,7 +113,7 @@ export async function updateCompliance(complianceId, updates) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || 'Unable to update compliance document.');
+    throw new Error(getApiError(data, 'Unable to update compliance document.'));
   }
 
   return data;
@@ -96,7 +131,262 @@ export async function createCompliance(document) {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.error || 'Unable to create compliance document.');
+    throw new Error(getApiError(data, 'Unable to create compliance document.'));
+  }
+
+  return data;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//vikas service code 
+export async function getServiceQueue(search = "", status = "all", sort = "due_date") {
+  const response = await fetch(
+    `${API_BASE_URL}/api/services/queue?search=${encodeURIComponent(search)}&status=${status}&sort=${sort}`,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+      },
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to fetch service queue.'));
+  }
+
+  return data;
+}
+
+export async function getServiceTypes() {
+  const response = await fetch(`${API_BASE_URL}/api/services/service-types`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to fetch service types.'));
+  }
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  return Array.isArray(data?.data) ? data.data : [];
+}
+
+export async function postCompleteService(payload) {
+  const response = await fetch(`${API_BASE_URL}/api/services/complete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("fleetguard_token") || ""}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, "Unable to complete service."));
+  }
+
+  return data;
+}
+
+export async function postStartService(vehicleId) {
+  const response = await fetch(`${API_BASE_URL}/api/services/start`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("fleetguard_token") || ""}`,
+    },
+    body: JSON.stringify({ vehicleId }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, "Unable to start service."));
+  }
+
+  return data;
+}
+
+export async function getDrivers() {
+  const response = await fetch(`${API_BASE_URL}/api/driver/list`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to fetch drivers list.'));
+  }
+
+  return data;
+}
+
+export async function getServiceHistory(vehicleId) {
+  const response = await fetch(`${API_BASE_URL}/api/services/history/${vehicleId}`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to fetch service history.'));
+  }
+
+  return data;
+}
+
+export async function createAssignment(payload) {
+  const response = await fetch(`${API_BASE_URL}/api/assignments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to create driver assignment.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
+export async function unassignDriver(vehicleId) {
+  const response = await fetch(`${API_BASE_URL}/api/assignments/unassign`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+    body: JSON.stringify({ vehicle_id: vehicleId }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to unassign driver.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
+export async function getAssignmentOverrides() {
+  const response = await fetch(`${API_BASE_URL}/api/admin/overrides`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to fetch assignment overrides.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
+export async function overrideAssignment(payload) {
+  const response = await fetch(`${API_BASE_URL}/api/assignments/override`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to override driver assignment.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
+export async function getDriverVehicle(driverId) {
+  const query = driverId ? `?driver_id=${encodeURIComponent(driverId)}` : '';
+  const response = await fetch(`${API_BASE_URL}/api/driver/vehicle${query}`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+      'x-driver-id': driverId || localStorage.getItem('fleetguard_user_id') || '',
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to fetch driver assigned vehicle.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
+export async function postPreTripChecklist(payload) {
+  const response = await fetch(`${API_BASE_URL}/api/driver/pre-trip`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to submit pre-trip checklist.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
+export async function getAdminNotifications() {
+  const response = await fetch(`${API_BASE_URL}/api/admin/notifications`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to fetch notifications.'));
+    errorObj.data = data;
+    throw errorObj;
   }
 
   return data;

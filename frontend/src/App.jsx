@@ -9,11 +9,18 @@ import FleetListPage from './pages/FleetListPage';
 import VehicleDetailsPage from './pages/VehicleDetailsPage';
 import PredictiveMaintenance from './pages/PredictiveMaintenance';
 import FleetAnalytics from './pages/FleetAnalytics';
-
+import AdminDashboard from './pages/AdminDashboard';
+import NotificationPage from './pages/NotificationPage';
+import ServiceDashboard from './pages/ServiceDashboard';
+import ServiceHistoryPage from './pages/ServiceHistoryPage';
+import DriverDashboard from './pages/DriverDashboard';
+import ReportsPage from './pages/ReportsPage';
+import { ArrowLeft } from 'lucide-react';
 function AppContent() {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
+  const [selectedServiceVehicle, setSelectedServiceVehicle] = useState({ id: null, name: '' });
 
   if (!user) {
     return <LoginPage onLoginSuccess={() => setCurrentPage('dashboard')} />;
@@ -34,9 +41,18 @@ function AppContent() {
     setSelectedVehicleId(null);
   };
 
+  const handleViewServiceHistory = (vehicleId, vehicleName) => {
+    setSelectedServiceVehicle({ id: vehicleId, name: vehicleName });
+    setCurrentPage('service-history');
+  };
+
+  const handleBackToServices = () => {
+    setCurrentPage('services');
+  };
+
   return (
     <MainLayout currentPage={currentPage} onNavigate={handleNavigate}>
-      {currentPage === 'dashboard' && <DashboardPage />}
+      {currentPage === 'dashboard' && <DashboardPage onNavigate={handleNavigate} />}
 
       {currentPage === 'register' && (
         <ProtectedRoute allowedRoles={['FLEET_MANAGER', 'ADMIN']}>
@@ -52,37 +68,35 @@ function AppContent() {
 
       {currentPage === 'details' && (
         <ProtectedRoute allowedRoles={['FLEET_MANAGER', 'ADMIN', 'DRIVER']}>
-          <div style={{ position: 'relative', paddingTop: '40px' }}>
-            <button onClick={handleBackToFleet} className="nav-back-button">← Back to Fleet</button>
-            <VehicleDetailsPage vehicleId={selectedVehicleId} onBack={handleBackToFleet} />
-          </div>
+          <VehicleDetailsPage vehicleId={selectedVehicleId} onBack={handleBackToFleet} />
         </ProtectedRoute>
       )}
 
       {currentPage === 'my-vehicles' && (
-        <ProtectedRoute allowedRoles={['DRIVER']}>
-          <div className="page-content">
-            <h2>My Assigned Vehicles</h2>
-            <p>Coming soon: View vehicles assigned to you</p>
-          </div>
+        <ProtectedRoute allowedRoles={['DRIVER', 'ADMIN', 'FLEET_MANAGER']}>
+          <DriverDashboard />
         </ProtectedRoute>
       )}
 
       {currentPage === 'compliance' && (
-        <ProtectedRoute allowedRoles={['DRIVER']}>
-          <div className="page-content">
-            <h2>Compliance Status</h2>
-            <p>Coming soon: View compliance status for your vehicles</p>
-          </div>
+        <ProtectedRoute allowedRoles={['DRIVER', 'ADMIN', 'FLEET_MANAGER']}>
+          <DriverDashboard />
         </ProtectedRoute>
       )}
 
       {currentPage === 'services' && (
-        <ProtectedRoute allowedRoles={['MECHANIC', 'ADMIN']}>
-          <div className="page-content">
-            <h2>Service Logs</h2>
-            <p>Coming soon: Manage service records</p>
-          </div>
+        <ProtectedRoute allowedRoles={['MECHANIC', 'FLEET_MANAGER', 'ADMIN']}>
+          <ServiceDashboard onViewHistory={handleViewServiceHistory} />
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'service-history' && (
+        <ProtectedRoute allowedRoles={['MECHANIC', 'FLEET_MANAGER', 'ADMIN']}>
+          <ServiceHistoryPage
+            vehicleId={selectedServiceVehicle.id}
+            vehicleName={selectedServiceVehicle.name}
+            onBack={handleBackToServices}
+          />
         </ProtectedRoute>
       )}
 
@@ -100,10 +114,19 @@ function AppContent() {
 
       {currentPage === 'admin' && (
         <ProtectedRoute allowedRoles={['ADMIN']}>
-          <div className="page-content">
-            <h2>Admin Panel</h2>
-            <p>Coming soon: Administrative tools</p>
-          </div>
+          <AdminDashboard />
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'notifications' && (
+        <ProtectedRoute allowedRoles={['ADMIN']}>
+          <NotificationPage />
+        </ProtectedRoute>
+      )}
+
+      {currentPage === 'reports' && (
+        <ProtectedRoute allowedRoles={['ADMIN']}>
+          <ReportsPage />
         </ProtectedRoute>
       )}
     </MainLayout>

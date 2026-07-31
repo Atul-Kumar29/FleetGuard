@@ -18,6 +18,7 @@ async function getPredictiveMaintenanceRisk() {
       make,
       model,
       current_mileage,
+      status,
       service_logs (
         id,
         service_date,
@@ -82,6 +83,7 @@ async function getPredictiveMaintenanceRisk() {
       lastServiceMileage: lastServiceMileage,
       distanceSinceLastService,
       risk,
+      vehicleStatus: vehicle.status,  // 'ACTIVE' or 'IN_MAINTENANCE'
       lastServiceDate: latestLog?.service_date ?? null,
       nextServiceKm: latestLog?.next_service_km ?? null,
       nextServiceDate: latestLog?.next_service_date ?? null,

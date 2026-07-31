@@ -14,7 +14,7 @@ function validateVehiclePayload(payload) {
   const make = normalizeString(payload.make);
   const model = normalizeString(payload.model);
   const year = Number(payload.year);
-  const type = normalizeString(payload.type).toUpperCase();
+  const type = normalizeString(payload.type || 'TRUCK').toUpperCase();
   const status = normalizeString(payload.status || 'ACTIVE').toUpperCase();
   const currentMileage = Number(payload.current_mileage ?? 0);
 
@@ -66,7 +66,8 @@ async function registerVehicle(req, res) {
       return res.status(400).json({ error: 'Validation failed.', details: errors });
     }
 
-    const supabase = getSupabaseClient();
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.token;
+    const supabase = getSupabaseClient(token);
 
     const [{ data: vinMatches, error: vinError }, { data: plateMatches, error: plateError }] = await Promise.all([
       supabase.from('vehicles').select('id').eq('vin', data.vin).limit(1),
@@ -171,12 +172,20 @@ async function getFleetList(req, res) {
 
     const vehicleIds = (vehicles || []).map((v) => v.id);
     let complianceMap = {};
+    let assignmentMap = {};
 
     if (vehicleIds.length > 0) {
-      const { data: complianceItems, error: complianceError } = await supabase
-        .from('compliance_items')
-        .select('vehicle_id, status')
-        .in('vehicle_id', vehicleIds);
+      const [{ data: complianceItems, error: complianceError }, { data: activeAssignments }] = await Promise.all([
+        supabase
+          .from('compliance_items')
+          .select('vehicle_id, status')
+          .in('vehicle_id', vehicleIds),
+        supabase
+          .from('assignments')
+          .select('id, vehicle_id, driver_id')
+          .in('vehicle_id', vehicleIds)
+          .eq('status', 'ACTIVE')
+      ]);
 
       if (complianceError) {
         return res.status(500).json({ error: 'Unable to fetch compliance status.', details: complianceError.message });
@@ -187,6 +196,33 @@ async function getFleetList(req, res) {
           acc[item.vehicle_id] = [];
         }
         acc[item.vehicle_id].push(item.status);
+        return acc;
+      }, {});
+
+      // Fetch driver details for all active assignments
+      let driverUserMap = {};
+      const driverIds = [...new Set((activeAssignments || []).map((a) => a.driver_id).filter(Boolean))];
+      if (driverIds.length > 0) {
+        const { data: driverUsers } = await supabase
+          .from('users')
+          .select('id, full_name, email')
+          .in('id', driverIds);
+
+        driverUserMap = (driverUsers || []).reduce((acc, u) => {
+          acc[u.id] = u;
+          return acc;
+        }, {});
+      }
+
+      assignmentMap = (activeAssignments || []).reduce((acc, item) => {
+        const userObj = driverUserMap[item.driver_id];
+        const driverName = userObj?.full_name || userObj?.email || 'Assigned Driver';
+        acc[item.vehicle_id] = {
+          assignment_id: item.id,
+          driver_id: item.driver_id,
+          driver_name: driverName,
+          driver_email: userObj?.email || ''
+        };
         return acc;
       }, {});
     }
@@ -208,6 +244,7 @@ async function getFleetList(req, res) {
       return {
         ...vehicle,
         compliance_status: complianceStatus,
+        assigned_driver: assignmentMap[vehicle.id] || null,
       };
     });
 

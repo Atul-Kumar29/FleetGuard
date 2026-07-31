@@ -7,8 +7,13 @@ const path = require('path');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const complianceRoutes = require('./routes/complianceRoutes');
 const serviceRoutes = require('./routes/serviceRoutes'); 
+const assignmentRoutes = require('./routes/assignmentRoutes');
+const driverRoutes = require('./routes/driverRoutes');
 const predictiveMaintenanceRoutes = require('./routes/predictiveMaintenance.routes');
 const fleetAnalyticsRoutes = require('./routes/fleetAnalytics.routes');
+const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Compliance scheduler service
 const { startComplianceMonitoring } = require('./services/complianceScheduler');
@@ -18,6 +23,7 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use('/api/auth', authRoutes);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
@@ -28,8 +34,12 @@ app.get('/health', (_req, res) => {
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/compliance', complianceRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/driver', driverRoutes);
 app.use('/api/admin', predictiveMaintenanceRoutes);
 app.use('/api/admin', fleetAnalyticsRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin', notificationRoutes);
 
 // Catch-all route for unhandled endpoints
 app.use((req, res) => {
