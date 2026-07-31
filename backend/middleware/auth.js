@@ -1,10 +1,10 @@
 const { getSupabaseClient } = require('../config/supabase');
 
 const DEMO_USERS = [
-  { id: '1', email: 'manager@fleetguard.com', role: 'FLEET_MANAGER' },
-  { id: '2', email: 'driver@fleetguard.com', role: 'DRIVER' },
-  { id: '3', email: 'mechanic@fleetguard.com', role: 'MECHANIC' },
-  { id: '4', email: 'admin@fleetguard.com', role: 'ADMIN' },
+  { id: '22222222-2222-2222-2222-222222222222', email: 'manager@fleetguard.com', role: 'FLEET_MANAGER', demoTokenId: '1' },
+  { id: '33333333-3333-3333-3333-333333333333', email: 'driver@fleetguard.com', role: 'DRIVER', demoTokenId: '2' },
+  { id: '55555555-5555-5555-5555-555555555555', email: 'mechanic@fleetguard.com', role: 'MECHANIC', demoTokenId: '3' },
+  { id: '11111111-1111-1111-1111-111111111111', email: 'admin@fleetguard.com', role: 'ADMIN', demoTokenId: '4' },
 ];
 
 function getDemoUserFromToken(token) {
@@ -20,7 +20,7 @@ function getDemoUserFromToken(token) {
     return null;
   }
   const userId = tokenParts[1];
-  return DEMO_USERS.find((user) => user.id === userId) || null;
+  return DEMO_USERS.find((user) => user.id === userId || user.demoTokenId === userId) || null;
 }
 
 function requireRole(allowedRoles = []) {

@@ -7,7 +7,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || (supabaseAnonKey && supabaseAnonKey.startsWith('sb_secret_') ? supabaseAnonKey : null);
 const supabaseKey = supabaseServiceRoleKey || supabaseAnonKey;
 
 if (!supabaseUrl || !supabaseKey) {
@@ -15,8 +15,8 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 // Debug: show which key type is present
-console.log("Using Service Role:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-console.log("Using Anon Key:", !!process.env.SUPABASE_ANON_KEY);
+console.log("Using Service Role:", !!supabaseServiceRoleKey);
+console.log("Using Anon Key:", !!supabaseAnonKey);
 
 function createSupabaseClient(accessToken) {
   if (!supabaseUrl || !supabaseKey) return null;

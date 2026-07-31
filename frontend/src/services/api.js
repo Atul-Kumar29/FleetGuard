@@ -257,6 +257,26 @@ export async function createAssignment(payload) {
   return data;
 }
 
+export async function unassignDriver(vehicleId) {
+  const response = await fetch(`${API_BASE_URL}/api/assignments/unassign`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+    body: JSON.stringify({ vehicle_id: vehicleId }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to unassign driver.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
 export async function getAssignmentOverrides() {
   const response = await fetch(`${API_BASE_URL}/api/admin/overrides`, {
     method: 'GET',
