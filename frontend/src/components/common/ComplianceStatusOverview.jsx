@@ -3,36 +3,33 @@ import ComplianceStatusCard from './ComplianceStatusCard';
 export default function ComplianceStatusOverview({ compliance, onEdit }) {
   if (!compliance || compliance.length === 0) {
     return (
-      <div className="compliance-overview">
-        <p className="empty-state">No compliance documents</p>
-      </div>
+      <div className="py-6 text-center text-sm text-slate-500">No compliance documents on file.</div>
     );
   }
 
   const complianceSummary = {
-    VALID: compliance.filter((c) => c.status === 'VALID').length,
+    VALID:   compliance.filter((c) => c.status === 'VALID').length,
     WARNING: compliance.filter((c) => c.status === 'WARNING').length,
     EXPIRED: compliance.filter((c) => c.status === 'EXPIRED').length,
   };
 
   return (
-    <div className="compliance-overview">
-      <div className="compliance-summary">
-        <div className="summary-item valid">
-          <span className="count">{complianceSummary.VALID}</span>
-          <span className="label">Valid</span>
-        </div>
-        <div className="summary-item warning">
-          <span className="count">{complianceSummary.WARNING}</span>
-          <span className="label">Warning</span>
-        </div>
-        <div className="summary-item expired">
-          <span className="count">{complianceSummary.EXPIRED}</span>
-          <span className="label">Expired</span>
-        </div>
+    <div className="flex flex-col gap-4">
+      {/* Summary pills */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-full">
+          {complianceSummary.VALID} Valid
+        </span>
+        <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold rounded-full">
+          {complianceSummary.WARNING} Warning
+        </span>
+        <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 border border-red-200 text-red-800 text-xs font-bold rounded-full">
+          {complianceSummary.EXPIRED} Expired
+        </span>
       </div>
 
-      <div className="compliance-list">
+      {/* Cards */}
+      <div className="flex flex-col gap-3">
         {compliance.map((item) => (
           <ComplianceStatusCard
             key={item.id}

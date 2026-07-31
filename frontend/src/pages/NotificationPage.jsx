@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAdminNotifications } from '../services/api';
+import { AlertTriangle, Wrench, Info, Bell, Clock } from 'lucide-react';
 
 export default function NotificationPage() {
   const [notifications, setNotifications] = useState([]);
@@ -52,20 +53,20 @@ export default function NotificationPage() {
         return {
           card: 'bg-red-50/80 border-red-500/80 text-red-900',
           badge: 'bg-red-500/10 text-red-700 border border-red-500/20',
-          icon: '⚠️'
+          icon: <AlertTriangle size={24} className="text-red-600" />
         };
       case 'WARNING':
         return {
-          card: 'bg-yellow-50/80 border-yellow-500/80 text-yellow-900',
-          badge: 'bg-yellow-500/10 text-yellow-700 border border-yellow-500/20',
-          icon: '🛠️'
+          card: 'bg-amber-50/80 border-amber-500/80 text-amber-900',
+          badge: 'bg-amber-500/10 text-amber-700 border border-amber-500/20',
+          icon: <Wrench size={24} className="text-amber-600" />
         };
       case 'INFO':
       default:
         return {
           card: 'bg-blue-50/80 border-blue-500/80 text-blue-900',
           badge: 'bg-blue-500/10 text-blue-700 border border-blue-500/20',
-          icon: 'ℹ️'
+          icon: <Info size={24} className="text-blue-600" />
         };
     }
   };
@@ -85,23 +86,23 @@ export default function NotificationPage() {
       {/* States handler */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <div className="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-sm font-semibold text-slate-500">Loading notifications...</p>
         </div>
       ) : error ? (
         <div className="bg-white border border-red-200 rounded-2xl p-8 text-center shadow-sm max-w-md mx-auto">
-          <p className="text-red-650 font-bold text-lg mb-2">Error</p>
+          <p className="text-red-600 font-bold text-lg mb-2">Error</p>
           <p className="text-slate-600 text-sm mb-6">{error}</p>
           <button
             onClick={fetchNotifications}
-            className="w-full sm:w-auto bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold py-2.5 px-6 rounded-xl transition-all shadow-sm shadow-sky-500/10"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-6 rounded-xl transition-all shadow-sm"
           >
             Retry
           </button>
         </div>
       ) : notifications.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center shadow-sm">
-          <span className="text-4xl mb-4 block">🔔</span>
+        <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center shadow-sm flex flex-col items-center justify-center">
+          <Bell size={40} className="text-slate-400 mb-4" />
           <h3 className="text-lg font-bold text-slate-900">No notifications found.</h3>
           <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
             Your system logs are currently clear. No active alerts or warning conditions detected.
@@ -117,8 +118,8 @@ export default function NotificationPage() {
                 className={`p-5 rounded-2xl border-l-4 border bg-white ${styles.card} shadow-sm transition-all hover:translate-x-1 duration-200`}
               >
                 <div className="flex items-start gap-4">
-                  {/* Status Emoji */}
-                  <span className="text-2xl pt-0.5 select-none">{styles.icon}</span>
+                  {/* Status Icon */}
+                  <span className="pt-0.5 select-none">{styles.icon}</span>
 
                   <div className="flex-1 space-y-2">
                     {/* Header line */}
@@ -145,7 +146,7 @@ export default function NotificationPage() {
 
                     {/* Timestamp */}
                     <div className="pt-2 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                      <span>🕒</span>
+                      <Clock size={14} />
                       <time dateTime={notif.createdAt}>{formatTime(notif.createdAt)}</time>
                     </div>
                   </div>
@@ -158,3 +159,4 @@ export default function NotificationPage() {
     </div>
   );
 }
+

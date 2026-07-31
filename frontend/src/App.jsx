@@ -13,6 +13,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import NotificationPage from './pages/NotificationPage';
 import ServiceDashboard from './pages/ServiceDashboard';
 import DriverDashboard from './pages/DriverDashboard';
+import { ArrowLeft } from 'lucide-react';
 function AppContent() {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -55,10 +56,7 @@ function AppContent() {
 
       {currentPage === 'details' && (
         <ProtectedRoute allowedRoles={['FLEET_MANAGER', 'ADMIN', 'DRIVER']}>
-          <div style={{ position: 'relative', paddingTop: '40px' }}>
-            <button onClick={handleBackToFleet} className="nav-back-button">← Back to Fleet</button>
-            <VehicleDetailsPage vehicleId={selectedVehicleId} onBack={handleBackToFleet} />
-          </div>
+          <VehicleDetailsPage vehicleId={selectedVehicleId} onBack={handleBackToFleet} />
         </ProtectedRoute>
       )}
 
@@ -75,7 +73,7 @@ function AppContent() {
       )}
 
       {currentPage === 'services' && (
-        <ProtectedRoute allowedRoles={['MECHANIC', 'ADMIN']}>
+        <ProtectedRoute allowedRoles={['MECHANIC', 'FLEET_MANAGER', 'ADMIN']}>
           <ServiceDashboard />
         </ProtectedRoute>
       )}

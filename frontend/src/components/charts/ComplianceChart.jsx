@@ -31,7 +31,7 @@ export default function ComplianceChart({ metrics }) {
           </Pie>
           <Tooltip 
             formatter={(value) => [`${value} Vehicles`, 'Count']}
-            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '12px' }}
+            contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#0f172a', fontSize: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
           />
           <Legend 
             verticalAlign="bottom" 

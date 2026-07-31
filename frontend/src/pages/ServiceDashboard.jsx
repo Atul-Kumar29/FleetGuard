@@ -192,8 +192,11 @@ export default function ServiceDashboard() {
   };
 
   return (
-    <div style={{ padding: "24px" }}>
-      <h1 style={{ marginBottom: "20px" }}>Service Center Work Queue</h1>
+    <div className="w-full max-w-7xl mx-auto flex flex-col gap-6">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-1">FleetGuard</p>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-4">Service Center Work Queue</h1>
+      </div>
 
       <ServiceFilters
         search={search}

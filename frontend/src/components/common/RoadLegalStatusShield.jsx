@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Shield, ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, ChevronDown, ChevronRight } from 'lucide-react';
 
 export default function RoadLegalStatusShield({
   isCompliant = true,
@@ -10,21 +11,20 @@ export default function RoadLegalStatusShield({
 
   if (loading) {
     return (
-      <div className="status-shield-card shield-loading">
-        <p>Checking vehicle road-legal compliance status...</p>
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-3">
+        <Shield size={28} className="text-slate-400 shrink-0" />
+        <p className="text-sm text-slate-500">Checking vehicle road-legal compliance status...</p>
       </div>
     );
   }
 
   if (!vehicle) {
     return (
-      <div className="status-shield-card shield-no-vehicle">
-        <div className="shield-header-row">
-          <span className="shield-icon">🅿️</span>
-          <div>
-            <h3>No Active Vehicle Assignment</h3>
-            <p>You currently do not have a vehicle assigned for active duty.</p>
-          </div>
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center gap-4">
+        <Shield size={32} className="text-slate-400 shrink-0" />
+        <div>
+          <h3 className="text-base font-extrabold text-slate-900">No Active Vehicle Assignment</h3>
+          <p className="text-sm text-slate-500 mt-0.5">You currently do not have a vehicle assigned for active duty.</p>
         </div>
       </div>
     );
@@ -33,66 +33,68 @@ export default function RoadLegalStatusShield({
   const isLegal = isCompliant && vehicle.status === 'ACTIVE' && vehicle.compliance_status !== 'EXPIRED';
 
   return (
-    <div className={`status-shield-card ${isLegal ? 'shield-road-legal' : 'shield-legal-risk'}`}>
-      <div className="shield-banner-content">
-        <div className="shield-main-info">
-          <div className="shield-badge-container">
-            <span className="shield-main-icon">{isLegal ? '🛡️' : '🚨'}</span>
-            <div className="shield-titles">
-              <span className={`shield-status-tag ${isLegal ? 'tag-legal' : 'tag-risk'}`}>
+    <div className={`rounded-2xl p-6 text-white shadow-lg flex flex-col gap-4 ${isLegal ? 'bg-gradient-to-br from-emerald-600 to-emerald-800' : 'bg-gradient-to-br from-red-600 to-red-900'}`}>
+      {/* Banner content */}
+      <div className="flex items-start justify-between gap-5">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-3">
+            {isLegal ? <ShieldCheck size={36} className="text-white/90" /> : <ShieldAlert size={36} className="text-white/90" />}
+            <div>
+              <span className={`inline-block px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-1
+                ${isLegal ? 'bg-white/20 text-white' : 'bg-white text-red-800'}`}>
                 {isLegal ? 'ROAD-LEGAL' : 'LEGAL RISK'}
               </span>
-              <h2>{isLegal ? 'Cleared for Public Road Duty' : 'Operation Blocked / Legal Risk'}</h2>
+              <h2 className="text-lg font-extrabold text-white leading-tight">
+                {isLegal ? 'Cleared for Public Road Duty' : 'Operation Blocked / Legal Risk'}
+              </h2>
             </div>
           </div>
-
-          <p className="shield-description">
+          <p className="text-sm text-white/85 leading-relaxed max-w-xl">
             {isLegal
               ? `Vehicle ${vehicle.license_plate} (${vehicle.make} ${vehicle.model}) satisfies all active safety, registration, and compliance mandates.`
               : `CRITICAL ALERT: Assigned vehicle ${vehicle.license_plate} has compliance violations or is under maintenance. Do not operate on public roads.`}
           </p>
         </div>
 
-        <div className="shield-vehicle-pill">
-          <span className="pill-label">Assigned Vehicle</span>
-          <span className="pill-plate">{vehicle.license_plate}</span>
-          <span className="pill-model">{vehicle.make} {vehicle.model}</span>
+        {/* Vehicle pill */}
+        <div className="shrink-0 bg-black/20 border border-white/20 rounded-xl px-4 py-3 min-w-[160px]">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/70 mb-1">Assigned Vehicle</p>
+          <p className="text-xl font-extrabold text-white">{vehicle.license_plate}</p>
+          <p className="text-xs text-white/80 mt-0.5">{vehicle.make} {vehicle.model}</p>
         </div>
       </div>
 
-      {/* Expandable Document Compliance Breakdown */}
+      {/* Compliance breakdown */}
       {complianceItems && complianceItems.length > 0 && (
-        <div className="shield-details-section">
+        <div className="border-t border-white/20 pt-4">
           <button
             type="button"
-            className="toggle-details-btn"
             onClick={() => setShowDetails(!showDetails)}
+            className="flex items-center gap-2 text-sm text-white/90 font-semibold hover:text-white transition-colors"
           >
-            <span>{showDetails ? '▼ Hide Compliance Breakdown' : '► View Compliance Breakdown'}</span>
-            <span className="docs-count">({complianceItems.length} documents checked)</span>
+            {showDetails ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {showDetails ? 'Hide Compliance Breakdown' : 'View Compliance Breakdown'}
+            <span className="text-white/60 text-xs">({complianceItems.length} documents checked)</span>
           </button>
 
           {showDetails && (
-            <div className="compliance-items-grid">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mt-3">
               {complianceItems.map((item, idx) => {
                 const isDocExpired = item.is_expired || item.status === 'EXPIRED';
                 return (
-                  <div
-                    key={item.id || idx}
-                    className={`compliance-doc-card ${isDocExpired ? 'doc-expired' : 'doc-valid'}`}
-                  >
-                    <div className="doc-card-header">
-                      <span className="doc-card-icon">{isDocExpired ? '⚠️' : '✅'}</span>
-                      <strong className="doc-card-type">{item.document_type || 'Compliance Document'}</strong>
+                  <div key={item.id || idx} className="bg-white/10 border border-white/15 rounded-xl p-3">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      {isDocExpired
+                        ? <AlertTriangle size={15} className="text-amber-300" />
+                        : <CheckCircle2 size={15} className="text-emerald-300" />}
+                      <strong className="text-xs font-bold text-white truncate">{item.document_type || 'Compliance Document'}</strong>
                     </div>
-                    <div className="doc-card-meta">
-                      <span className="doc-status-badge">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className={`font-extrabold ${isDocExpired ? 'text-red-300' : 'text-emerald-300'}`}>
                         {isDocExpired ? 'EXPIRED' : 'VALID'}
                       </span>
                       {item.expiration_date && (
-                        <span className="doc-exp-date">
-                          Exp: {new Date(item.expiration_date).toLocaleDateString()}
-                        </span>
+                        <span className="text-white/60">Exp: {new Date(item.expiration_date).toLocaleDateString()}</span>
                       )}
                     </div>
                   </div>

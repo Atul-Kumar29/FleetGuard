@@ -32,7 +32,7 @@ function createSupabaseClient(accessToken) {
     // The service-role client is used only by this server after its own role
     // middleware authorizes the request. Without it, a real user JWT is
     // forwarded so Supabase RLS can evaluate auth.uid().
-    global: accessToken && !supabaseServiceRoleKey ? {
+    global: accessToken ? {
       headers: { Authorization: `Bearer ${accessToken}` },
     } : undefined,
   });
@@ -46,9 +46,8 @@ const supabase = createSupabaseClient();
 let exportVal;
 
 if (supabase) {
-  supabase.supabase = supabase;
-  supabase.getSupabaseClient = function(accessToken) {
-    return accessToken ? createSupabaseClient(accessToken) : supabase;
+  supabase.getSupabaseClient = function() {
+    return supabase;
   };
   exportVal = supabase;
 } else {
