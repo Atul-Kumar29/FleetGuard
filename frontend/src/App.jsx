@@ -39,7 +39,7 @@ function AppContent() {
 
   return (
     <MainLayout currentPage={currentPage} onNavigate={handleNavigate}>
-      {currentPage === 'dashboard' && <DashboardPage />}
+      {currentPage === 'dashboard' && <DashboardPage onNavigate={handleNavigate} />}
 
       {currentPage === 'register' && (
         <ProtectedRoute allowedRoles={['FLEET_MANAGER', 'ADMIN']}>

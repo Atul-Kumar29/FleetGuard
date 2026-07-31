@@ -171,12 +171,20 @@ async function getFleetList(req, res) {
 
     const vehicleIds = (vehicles || []).map((v) => v.id);
     let complianceMap = {};
+    let assignmentMap = {};
 
     if (vehicleIds.length > 0) {
-      const { data: complianceItems, error: complianceError } = await supabase
-        .from('compliance_items')
-        .select('vehicle_id, status')
-        .in('vehicle_id', vehicleIds);
+      const [{ data: complianceItems, error: complianceError }, { data: activeAssignments }] = await Promise.all([
+        supabase
+          .from('compliance_items')
+          .select('vehicle_id, status')
+          .in('vehicle_id', vehicleIds),
+        supabase
+          .from('assignments')
+          .select('id, vehicle_id, driver_id, users:driver_id(id, full_name, email)')
+          .in('vehicle_id', vehicleIds)
+          .eq('status', 'ACTIVE')
+      ]);
 
       if (complianceError) {
         return res.status(500).json({ error: 'Unable to fetch compliance status.', details: complianceError.message });
@@ -187,6 +195,18 @@ async function getFleetList(req, res) {
           acc[item.vehicle_id] = [];
         }
         acc[item.vehicle_id].push(item.status);
+        return acc;
+      }, {});
+
+      assignmentMap = (activeAssignments || []).reduce((acc, item) => {
+        const userObj = Array.isArray(item.users) ? item.users[0] : item.users;
+        const driverName = userObj?.full_name || userObj?.email || 'Assigned Driver';
+        acc[item.vehicle_id] = {
+          assignment_id: item.id,
+          driver_id: item.driver_id,
+          driver_name: driverName,
+          driver_email: userObj?.email || ''
+        };
         return acc;
       }, {});
     }
@@ -208,6 +228,7 @@ async function getFleetList(req, res) {
       return {
         ...vehicle,
         compliance_status: complianceStatus,
+        assigned_driver: assignmentMap[vehicle.id] || null,
       };
     });
 

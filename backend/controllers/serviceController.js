@@ -113,6 +113,31 @@ exports.getServiceQueue = async (req, res) => {
     }
 };
 
+exports.getServiceTypes = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from("service_types")
+            .select("id, service_name")
+            .order("service_name", { ascending: true });
+
+        if (error) {
+            return res.status(500).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        return res.status(200).json(data || []);
+    } catch (err) {
+        console.error("Get Service Types Error:", err);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch service types."
+        });
+    }
+};
+
 exports.completeService = async (req, res) => {
     try {
         const {
@@ -155,28 +180,11 @@ exports.completeService = async (req, res) => {
             });
         }
 
-        
-        // Debug logs to help trace why service type may not be found
-        console.log('========== DEBUG ==========');
-        console.log('Request Body:', req.body);
-        console.log('Vehicle ID:', vehicleId);
-        console.log('Service Type ID:', serviceTypeId);
-
-        // Fetch and log all service types (id and service_name)
-        const { data: allServiceTypes, error: allServiceTypesError } = await supabase
-            .from("service_types")
-            .select('id, service_name');
-        console.log('All Service Types:', allServiceTypes, 'fetchError:', allServiceTypesError);
-
         const { data: serviceType, error: serviceTypeError } = await supabase
             .from("service_types")
-            .select("*")
+            .select("id, service_name")
             .eq("id", serviceTypeId)
-            .single();
-
-        console.log('Matched Service Type:', serviceType);
-        console.log('Service Type Error:', serviceTypeError);
-        console.log('===========================');
+            .maybeSingle();
 
         if (serviceTypeError || !serviceType) {
             return res.status(404).json({
@@ -198,8 +206,6 @@ exports.completeService = async (req, res) => {
             next_service_km: nextServiceKm != null ? Number(nextServiceKm) : null
         };
 
-        console.log('========== SERVICE LOG DATA ==========', serviceLogData);
-
         const { error: logError } = await supabase
             .from("service_logs")
             .insert(serviceLogData);
@@ -212,16 +218,30 @@ exports.completeService = async (req, res) => {
             });
         }
 
+        const { data: latestServiceLog, error: latestServiceLogError } = await supabase
+            .from("service_logs")
+            .select("service_date, odometer_reading, next_service_date, next_service_km")
+            .eq("vehicle_id", vehicleId)
+            .order("service_date", { ascending: false })
+            .limit(1)
+            .single();
+
+        if (latestServiceLogError || !latestServiceLog) {
+            console.log('========== LATEST SERVICE LOG ERROR ==========', latestServiceLogError);
+            return res.status(500).json({
+                success: false,
+                message: latestServiceLogError?.message || "Failed to retrieve latest service log."
+            });
+        }
+
         const vehicleUpdateData = {
-            current_mileage: Number(odometerReading),
-            last_service_date: serviceDate,
-            last_service_mileage: Number(odometerReading),
-            next_service_due_date: nextServiceDate,
-            next_service_due_mileage: nextServiceKm != null ? Number(nextServiceKm) : null,
+            current_mileage: Number(latestServiceLog.odometer_reading),
+            last_service_date: latestServiceLog.service_date,
+            last_service_mileage: Number(latestServiceLog.odometer_reading),
+            next_service_due_date: latestServiceLog.next_service_date,
+            next_service_due_mileage: latestServiceLog.next_service_km != null ? Number(latestServiceLog.next_service_km) : null,
             maintenance_risk: "LOW"
         };
-
-        console.log('========== VEHICLE UPDATE DATA ==========', vehicleUpdateData);
 
         const { error: updateError } = await supabase
             .from("vehicles")

@@ -1,6 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 
-export default function DashboardPage() {
+export default function DashboardPage({ onNavigate }) {
   const { user } = useAuth();
 
   const getRoleWelcomeMessage = () => {
@@ -88,11 +88,16 @@ export default function DashboardPage() {
           <h2>Quick Actions</h2>
           <div className="actions-grid">
             {quickActions.map((action) => (
-              <div key={action.id} className="action-card">
+              <button
+                key={action.id}
+                type="button"
+                className="action-card action-card-button"
+                onClick={() => onNavigate?.(action.id)}
+              >
                 <div className="action-icon">{action.icon}</div>
                 <h3>{action.title}</h3>
                 <p>{action.description}</p>
-              </div>
+              </button>
             ))}
           </div>
         </div>

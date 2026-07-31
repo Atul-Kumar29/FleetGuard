@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getDrivers, getFleetList, createAssignment, overrideAssignment } from '../../services/api';
+import { getDrivers, getFleetList, createAssignment, overrideAssignment, unassignDriver } from '../../services/api';
 import NonCompliantAssignmentModal from './NonCompliantAssignmentModal';
 import OverrideJustificationForm from './OverrideJustificationForm';
 
@@ -25,6 +25,26 @@ export default function AssignDriverDrawer({
   const [driversLoading, setDriversLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  const handleUnassignDriver = async () => {
+    if (!selectedVehicleId) return;
+    try {
+      setLoading(true);
+      setError('');
+      const res = await unassignDriver(selectedVehicleId);
+      setSuccessMessage(res.message || 'Driver unassigned successfully.');
+      if (onSuccess) {
+        setTimeout(() => {
+          onSuccess();
+          onClose();
+        }, 1000);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to unassign driver.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Sync selected vehicle when initialVehicle prop changes
   useEffect(() => {
@@ -172,6 +192,25 @@ export default function AssignDriverDrawer({
           <form onSubmit={handleSubmit} className="drawer-body">
             {error && <div className="drawer-alert drawer-alert-error">{error}</div>}
             {successMessage && <div className="drawer-alert drawer-alert-success">{successMessage}</div>}
+
+            {/* Assigned Driver Status Banner */}
+            {currentVehicle?.assigned_driver && (
+              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '12px', borderRadius: '8px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: '#1e40af', fontWeight: 'bold', textTransform: 'uppercase' }}>Currently Assigned Driver</div>
+                  <div style={{ fontWeight: '600', color: '#1e3a8a', marginTop: '2px' }}>👤 {currentVehicle.assigned_driver.driver_name}</div>
+                  {currentVehicle.assigned_driver.driver_email && <div style={{ fontSize: '0.8rem', color: '#3b82f6' }}>{currentVehicle.assigned_driver.driver_email}</div>}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleUnassignDriver}
+                  disabled={loading}
+                  style={{ background: '#ef4444', color: '#ffffff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer' }}
+                >
+                  Unassign Driver
+                </button>
+              </div>
+            )}
 
             {/* Vehicle Selection */}
             <div className="form-group">

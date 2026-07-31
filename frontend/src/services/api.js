@@ -170,6 +170,25 @@ export async function getServiceQueue(search = "", status = "all", sort = "due_d
   return data;
 }
 
+export async function getServiceTypes() {
+  const response = await fetch(`${API_BASE_URL}/api/services/service-types`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to fetch service types.'));
+  }
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  return Array.isArray(data?.data) ? data.data : [];
+}
+
 export async function postCompleteService(payload) {
   const response = await fetch(`${API_BASE_URL}/api/services/complete`, {
     method: "POST",
@@ -231,6 +250,26 @@ export async function createAssignment(payload) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const errorObj = new Error(getApiError(data, 'Unable to create driver assignment.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
+export async function unassignDriver(vehicleId) {
+  const response = await fetch(`${API_BASE_URL}/api/assignments/unassign`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+    body: JSON.stringify({ vehicle_id: vehicleId }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to unassign driver.'));
     errorObj.data = data;
     throw errorObj;
   }
@@ -309,6 +348,25 @@ export async function postPreTripChecklist(payload) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const errorObj = new Error(getApiError(data, 'Unable to submit pre-trip checklist.'));
+    errorObj.data = data;
+    throw errorObj;
+  }
+
+  return data;
+}
+
+export async function getAdminNotifications() {
+  const response = await fetch(`${API_BASE_URL}/api/admin/notifications`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const errorObj = new Error(getApiError(data, 'Unable to fetch notifications.'));
     errorObj.data = data;
     throw errorObj;
   }

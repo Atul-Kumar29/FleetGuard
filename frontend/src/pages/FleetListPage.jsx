@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getFleetList } from '../services/api';
+import { getFleetList, unassignDriver } from '../services/api';
 import AssignDriverDrawer from '../components/common/AssignDriverDrawer';
 
 function getStatusColor(status) {
@@ -62,6 +62,17 @@ export default function FleetListPage({ onSelectVehicle }) {
   const handleOpenAssignDrawer = (vehicle = null) => {
     setTargetVehicleForAssignment(vehicle);
     setIsDrawerOpen(true);
+  };
+
+  const handleUnassign = async (vehicleId) => {
+    try {
+      setLoading(true);
+      await unassignDriver(vehicleId);
+      await loadFleet();
+    } catch (err) {
+      setError(err.message || 'Failed to unassign driver.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -131,6 +142,7 @@ export default function FleetListPage({ onSelectVehicle }) {
                   <th>Type</th>
                   <th>Status</th>
                   <th>Compliance</th>
+                  <th>Assigned Driver</th>
                   <th>Mileage</th>
                   <th>Actions</th>
                 </tr>
@@ -155,6 +167,15 @@ export default function FleetListPage({ onSelectVehicle }) {
                         {vehicle.compliance_status}
                       </span>
                     </td>
+                    <td>
+                      {vehicle.assigned_driver ? (
+                        <span className="badge" style={{ backgroundColor: '#2563eb', color: '#fff', fontSize: '0.8rem', padding: '4px 8px' }}>
+                          👤 {vehicle.assigned_driver.driver_name}
+                        </span>
+                      ) : (
+                        <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>Unassigned</span>
+                      )}
+                    </td>
                     <td>{vehicle.current_mileage.toLocaleString()} km</td>
                     <td>
                       <div style={{ display: 'flex', gap: '8px' }}>
@@ -171,6 +192,15 @@ export default function FleetListPage({ onSelectVehicle }) {
                         >
                           Assign
                         </button>
+                        {vehicle.assigned_driver && (
+                          <button
+                            onClick={() => handleUnassign(vehicle.id)}
+                            className="view-btn"
+                            style={{ backgroundColor: '#ef4444', color: '#fff' }}
+                          >
+                            Unassign
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
