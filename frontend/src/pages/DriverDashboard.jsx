@@ -213,80 +213,88 @@ export default function DriverDashboard() {
 
       {/* Assigned Vehicle Details */}
       {!loading && vehicleData?.vehicle && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide mb-4">Assigned Duty Details</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">License Plate</p>
-              <strong className="text-base font-extrabold text-blue-700">{vehicleData.vehicle.license_plate}</strong>
+        <>
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide mb-4">Assigned Duty Details</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">License Plate</p>
+                <strong className="text-base font-extrabold text-blue-700">{vehicleData.vehicle.license_plate}</strong>
+              </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Make &amp; Model</p>
+                <span className="text-sm font-bold text-slate-900">{vehicleData.vehicle.make} {vehicleData.vehicle.model} ({vehicleData.vehicle.year})</span>
+              </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">VIN</p>
+                <span className="text-xs font-mono font-semibold text-slate-700">{vehicleData.vehicle.vin}</span>
+              </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Assignment</p>
+                <span className="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-full">
+                  {vehicleData.assignment?.status || 'ACTIVE'}
+                </span>
+              </div>
             </div>
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Make &amp; Model</p>
-              <span className="text-sm font-bold text-slate-900">{vehicleData.vehicle.make} {vehicleData.vehicle.model} ({vehicleData.vehicle.year})</span>
-            </div>
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">VIN</p>
-              <span className="text-xs font-mono font-semibold text-slate-700">{vehicleData.vehicle.vin}</span>
-            </div>
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Assignment</p>
-              <span className="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-full">
-                {vehicleData.assignment?.status || 'ACTIVE'}
-              </span>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Current Mileage</p>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="0"
+                    value={mileageInput}
+                    onChange={(e) => setMileageInput(e.target.value)}
+                    className={`w-full ${inputClass}`}
+                  />
+                  <button
+                    onClick={async () => {
+                      if (!vehicleData?.vehicle?.id) return;
+                      const mileageValue = Number(mileageInput);
+                      if (!Number.isInteger(mileageValue) || mileageValue < 0) {
+                        setMileageMessage('Enter a valid non-negative mileage.');
+                        return;
+                      }
+                      setMileageUpdating(true);
+                      setMileageMessage('');
+                      try {
+                        const result = await updateVehicleMileage(vehicleData.vehicle.id, mileageValue);
+                        setMileageInput(String(result.vehicle.current_mileage));
+                        setMileageMessage('Mileage updated successfully.');
+                        setVehicleData((prev) => ({
+                          ...prev,
+                          vehicle: {
+                            ...prev.vehicle,
+                            current_mileage: result.vehicle.current_mileage,
+                          },
+                        }));
+                      } catch (err) {
+                        setMileageMessage(err.message || 'Failed to update mileage.');
+                      } finally {
+                        setMileageUpdating(false);
+                      }
+                    }}
+                    disabled={mileageUpdating}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    {mileageUpdating ? 'Saving…' : 'Update'}
+                  </button>
+                </div>
+                {mileageMessage && (
+                  <p className="mt-2 text-sm text-slate-600">{mileageMessage}</p>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Current Mileage</p>
-              <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  min="0"
-                  value={mileageInput}
-                  onChange={(e) => setMileageInput(e.target.value)}
-                  className={`w-full ${inputClass}`}
-                />
-                <button
-                  onClick={async () => {
-                    if (!vehicleData?.vehicle?.id) return;
-                    const mileageValue = Number(mileageInput);
-                    if (!Number.isInteger(mileageValue) || mileageValue < 0) {
-                      setMileageMessage('Enter a valid non-negative mileage.');
-                      return;
-                    }
-                    setMileageUpdating(true);
-                    setMileageMessage('');
-                    try {
-                      const result = await updateVehicleMileage(vehicleData.vehicle.id, mileageValue);
-                      setMileageInput(String(result.vehicle.current_mileage));
-                      setMileageMessage('Mileage updated successfully.');
-                      setVehicleData((prev) => ({
-                        ...prev,
-                        vehicle: {
-                          ...prev.vehicle,
-                          current_mileage: result.vehicle.current_mileage,
-                        },
-                      }));
-                    } catch (err) {
-                      setMileageMessage(err.message || 'Failed to update mileage.');
-                    } finally {
-                      setMileageUpdating(false);
-                    }
-                  }}
-                  disabled={mileageUpdating}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
-                >
-                  <Edit3 className="h-4 w-4" />
-                  {mileageUpdating ? 'Saving…' : 'Update'}
-                </button>
-              </div>
-              {mileageMessage && (
-                <p className="mt-2 text-sm text-slate-600">{mileageMessage}</p>
-              )}
-            </div>
-          </div>
-        </div>
+          <PreTripChecklistForm
+            driverId={selectedDriverId || user?.id}
+            vehicleId={vehicleData.vehicle.id}
+            onSubmitted={() => setError('')}
+          />
+        </>
       )}
 
       {/* Assignment Drawer Modal */}

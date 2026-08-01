@@ -1,8 +1,46 @@
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getDriverVehicle } from '../services/api';
+import PreTripChecklistForm from '../components/common/PreTripChecklistForm';
 import { PlusCircle, Truck, Car, ShieldCheck, Wrench, Settings, CheckCircle2, BarChart3, Activity } from 'lucide-react';
 
 export default function DashboardPage({ onNavigate }) {
   const { user } = useAuth();
+  const [vehicleData, setVehicleData] = useState(null);
+  const [assignmentLoading, setAssignmentLoading] = useState(false);
+  const [assignmentError, setAssignmentError] = useState('');
+
+  useEffect(() => {
+    if (user?.role !== 'DRIVER') return;
+
+    let isMounted = true;
+
+    async function loadAssignedVehicle() {
+      try {
+        setAssignmentLoading(true);
+        setAssignmentError('');
+        const data = await getDriverVehicle(user.id);
+        if (isMounted) {
+          setVehicleData(data);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setVehicleData(null);
+          setAssignmentError(err.message || 'Unable to load assigned vehicle.');
+        }
+      } finally {
+        if (isMounted) {
+          setAssignmentLoading(false);
+        }
+      }
+    }
+
+    loadAssignedVehicle();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id, user?.role]);
 
   const getRoleWelcomeMessage = () => {
     switch (user?.role) {
@@ -71,6 +109,35 @@ export default function DashboardPage({ onNavigate }) {
               );
             })}
           </div>
+        </section>
+      )}
+
+      {user?.role === 'DRIVER' && (
+        <section className="mb-8 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500">Pre-Trip Checklist</h2>
+              <p className="text-sm text-slate-600 mt-1">Log today's vehicle safety inspection before departure.</p>
+            </div>
+          </div>
+
+          {assignmentLoading && <p className="text-sm text-slate-500">Loading assigned vehicle...</p>}
+          {assignmentError && <p className="text-sm text-red-600">{assignmentError}</p>}
+
+          {!assignmentLoading && !assignmentError && vehicleData?.vehicle && (
+            <PreTripChecklistForm
+              driverId={user?.id}
+              vehicleId={vehicleData.vehicle.id}
+            />
+          )}
+
+          {!assignmentLoading && !assignmentError && !vehicleData?.vehicle && !vehicleData?.no_assignment && (
+            <p className="text-sm text-slate-500">No active vehicle assignment was found yet.</p>
+          )}
+
+          {!assignmentLoading && !assignmentError && vehicleData?.no_assignment && (
+            <p className="text-sm text-slate-500">You currently do not have a vehicle assigned for active duty.</p>
+          )}
         </section>
       )}
 
