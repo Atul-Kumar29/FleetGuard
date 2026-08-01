@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * Modern dashboard summary card with hover effects, borders, and custom background highlights.
  * 
@@ -10,36 +8,36 @@ import React from 'react';
  * @param {string} props.variant - Variant highlight ('primary', 'success', 'warning', 'danger').
  */
 export default function SummaryCard({ title, value, icon, variant = 'primary' }) {
-  let ringStyles = 'hover:border-slate-700/60 hover:shadow-slate-900/50';
-  let accentBarStyles = 'bg-slate-700';
-  let iconContainerStyles = 'bg-slate-800 text-slate-400';
+  let ringStyles = 'hover:border-slate-300 hover:shadow-md';
+  let accentBarStyles = 'bg-slate-400';
+  let iconContainerStyles = 'bg-slate-100 text-slate-600 border border-slate-200';
 
   if (variant === 'success') {
-    ringStyles = 'hover:border-emerald-500/30 hover:shadow-emerald-950/20';
-    accentBarStyles = 'bg-emerald-500';
-    iconContainerStyles = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+    ringStyles = 'hover:border-emerald-300 hover:shadow-md';
+    accentBarStyles = 'bg-emerald-600';
+    iconContainerStyles = 'bg-emerald-50 text-emerald-600 border border-emerald-100';
   } else if (variant === 'warning') {
-    ringStyles = 'hover:border-amber-500/30 hover:shadow-amber-950/20';
+    ringStyles = 'hover:border-amber-300 hover:shadow-md';
     accentBarStyles = 'bg-amber-500';
-    iconContainerStyles = 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+    iconContainerStyles = 'bg-amber-50 text-amber-600 border border-amber-100';
   } else if (variant === 'danger') {
-    ringStyles = 'hover:border-rose-500/30 hover:shadow-rose-950/20';
-    accentBarStyles = 'bg-rose-500';
-    iconContainerStyles = 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
+    ringStyles = 'hover:border-rose-300 hover:shadow-md';
+    accentBarStyles = 'bg-rose-600';
+    iconContainerStyles = 'bg-rose-50 text-rose-600 border border-rose-100';
   } else if (variant === 'primary') {
-    ringStyles = 'hover:border-sky-500/30 hover:shadow-sky-950/20';
-    accentBarStyles = 'bg-sky-500';
-    iconContainerStyles = 'bg-sky-500/10 text-sky-400 border border-sky-500/20';
+    ringStyles = 'hover:border-blue-300 hover:shadow-md';
+    accentBarStyles = 'bg-blue-600';
+    iconContainerStyles = 'bg-blue-50 text-blue-600 border border-blue-100';
   }
 
   return (
-    <div className={`relative overflow-hidden bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-xl p-6 transition-all duration-300 shadow-xl flex items-center justify-between ${ringStyles}`}>
+    <div className={`relative overflow-hidden bg-white border border-slate-200/80 rounded-xl p-6 transition-all duration-300 shadow-sm flex items-center justify-between ${ringStyles}`}>
       {/* Decorative vertical colored accent bar */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${accentBarStyles}`} />
       
       <div className="space-y-1">
-        <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">{title}</p>
-        <p className="text-3xl font-bold text-slate-100 tracking-tight">{value}</p>
+        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{title}</p>
+        <p className="text-3xl font-bold text-slate-900 tracking-tight">{value}</p>
       </div>
 
       {icon && (
@@ -50,3 +48,4 @@ export default function SummaryCard({ title, value, icon, variant = 'primary' })
     </div>
   );
 }
+

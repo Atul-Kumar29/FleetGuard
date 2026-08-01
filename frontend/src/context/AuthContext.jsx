@@ -1,39 +1,47 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext } from 'react';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Try to restore user from localStorage on mount
+  const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem('fleetguard_user');
     const token = localStorage.getItem('fleetguard_token');
-    
+
     if (storedUser && token) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        const userId = parsed?.id || parsed?.user_id || parsed?.sub;
+        if (userId) {
+          localStorage.setItem('fleetguard_user_id', userId);
+        }
+        return parsed;
       } catch (err) {
         console.error('Failed to parse stored user:', err);
         localStorage.removeItem('fleetguard_user');
         localStorage.removeItem('fleetguard_token');
+        localStorage.removeItem('fleetguard_user_id');
       }
     }
-    
-    setLoading(false);
-  }, []);
+
+    return null;
+  });
+  const loading = false;
 
   const login = (userData, token) => {
     setUser(userData);
+    const userId = userData?.id || userData?.user_id || userData?.sub;
     localStorage.setItem('fleetguard_user', JSON.stringify(userData));
     localStorage.setItem('fleetguard_token', token);
+    if (userId) {
+      localStorage.setItem('fleetguard_user_id', userId);
+    }
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('fleetguard_user');
     localStorage.removeItem('fleetguard_token');
+    localStorage.removeItem('fleetguard_user_id');
   };
 
   return (
@@ -43,6 +51,7 @@ export function AuthProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

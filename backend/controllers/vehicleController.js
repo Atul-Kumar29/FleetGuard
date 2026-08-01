@@ -14,7 +14,7 @@ function validateVehiclePayload(payload) {
   const make = normalizeString(payload.make);
   const model = normalizeString(payload.model);
   const year = Number(payload.year);
-  const type = normalizeString(payload.type).toUpperCase();
+  const type = normalizeString(payload.type || 'TRUCK').toUpperCase();
   const status = normalizeString(payload.status || 'ACTIVE').toUpperCase();
   const currentMileage = Number(payload.current_mileage ?? 0);
 
@@ -66,7 +66,8 @@ async function registerVehicle(req, res) {
       return res.status(400).json({ error: 'Validation failed.', details: errors });
     }
 
-    const supabase = getSupabaseClient();
+    const token = req.headers.authorization?.replace('Bearer ', '') || req.token;
+    const supabase = getSupabaseClient(token);
 
     const [{ data: vinMatches, error: vinError }, { data: plateMatches, error: plateError }] = await Promise.all([
       supabase.from('vehicles').select('id').eq('vin', data.vin).limit(1),
@@ -139,6 +140,73 @@ async function getVehicleDetails(req, res) {
   }
 }
 
+async function updateVehicleMileage(req, res) {
+  try {
+    const { id } = req.params;
+    const mileage = req.body?.current_mileage;
+
+    if (!id) {
+      return res.status(400).json({ error: 'Vehicle ID is required.' });
+    }
+
+    if (mileage === undefined || mileage === null) {
+      return res.status(400).json({ error: 'current_mileage is required.' });
+    }
+
+    const currentMileage = Number(mileage);
+    if (!Number.isInteger(currentMileage) || currentMileage < 0) {
+      return res.status(400).json({ error: 'Current mileage must be a non-negative integer.' });
+    }
+
+    const supabase = getSupabaseClient(req.headers.authorization?.replace('Bearer ', '') || undefined);
+
+    const { data: vehicle, error: vehicleError } = await supabase
+      .from('vehicles')
+      .select('id, current_mileage')
+      .eq('id', id)
+      .single();
+
+    if (vehicleError || !vehicle) {
+      return res.status(404).json({ error: 'Vehicle not found.' });
+    }
+
+    const requestedByDriver = req.user && req.user.role === 'DRIVER';
+    if (requestedByDriver) {
+      const { data: assignment, error: assignmentError } = await supabase
+        .from('assignments')
+        .select('id')
+        .eq('vehicle_id', id)
+        .eq('driver_id', req.user.id)
+        .eq('status', 'ACTIVE')
+        .single();
+
+      if (assignmentError || !assignment) {
+        return res.status(403).json({ error: 'You may only update mileage for your assigned active vehicle.' });
+      }
+    }
+
+    const existingMileage = Number(vehicle.current_mileage || 0);
+    if (currentMileage < existingMileage) {
+      return res.status(400).json({ error: 'Mileage cannot be lower than the current recorded reading.' });
+    }
+
+    const { data: updatedVehicle, error: updateError } = await supabase
+      .from('vehicles')
+      .update({ current_mileage: currentMileage })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) {
+      return res.status(500).json({ error: 'Unable to update vehicle mileage.', details: updateError.message });
+    }
+
+    return res.status(200).json({ message: 'Mileage updated successfully.', vehicle: updatedVehicle });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || 'Unexpected server error.' });
+  }
+}
+
 async function getFleetList(req, res) {
   try {
     const { type, status, search, limit = 50, offset = 0 } = req.query;
@@ -171,12 +239,20 @@ async function getFleetList(req, res) {
 
     const vehicleIds = (vehicles || []).map((v) => v.id);
     let complianceMap = {};
+    let assignmentMap = {};
 
     if (vehicleIds.length > 0) {
-      const { data: complianceItems, error: complianceError } = await supabase
-        .from('compliance_items')
-        .select('vehicle_id, status')
-        .in('vehicle_id', vehicleIds);
+      const [{ data: complianceItems, error: complianceError }, { data: activeAssignments }] = await Promise.all([
+        supabase
+          .from('compliance_items')
+          .select('vehicle_id, status')
+          .in('vehicle_id', vehicleIds),
+        supabase
+          .from('assignments')
+          .select('id, vehicle_id, driver_id')
+          .in('vehicle_id', vehicleIds)
+          .eq('status', 'ACTIVE')
+      ]);
 
       if (complianceError) {
         return res.status(500).json({ error: 'Unable to fetch compliance status.', details: complianceError.message });
@@ -187,6 +263,33 @@ async function getFleetList(req, res) {
           acc[item.vehicle_id] = [];
         }
         acc[item.vehicle_id].push(item.status);
+        return acc;
+      }, {});
+
+      // Fetch driver details for all active assignments
+      let driverUserMap = {};
+      const driverIds = [...new Set((activeAssignments || []).map((a) => a.driver_id).filter(Boolean))];
+      if (driverIds.length > 0) {
+        const { data: driverUsers } = await supabase
+          .from('users')
+          .select('id, full_name, email')
+          .in('id', driverIds);
+
+        driverUserMap = (driverUsers || []).reduce((acc, u) => {
+          acc[u.id] = u;
+          return acc;
+        }, {});
+      }
+
+      assignmentMap = (activeAssignments || []).reduce((acc, item) => {
+        const userObj = driverUserMap[item.driver_id];
+        const driverName = userObj?.full_name || userObj?.email || 'Assigned Driver';
+        acc[item.vehicle_id] = {
+          assignment_id: item.id,
+          driver_id: item.driver_id,
+          driver_name: driverName,
+          driver_email: userObj?.email || ''
+        };
         return acc;
       }, {});
     }
@@ -208,6 +311,7 @@ async function getFleetList(req, res) {
       return {
         ...vehicle,
         compliance_status: complianceStatus,
+        assigned_driver: assignmentMap[vehicle.id] || null,
       };
     });
 
@@ -228,4 +332,5 @@ module.exports = {
   registerVehicle,
   getVehicleDetails,
   getFleetList,
+  updateVehicleMileage,
 };
