@@ -72,6 +72,25 @@ export async function getVehicleDetails(vehicleId) {
   return data;
 }
 
+export async function updateVehicleMileage(vehicleId, currentMileage) {
+  const response = await fetch(`${API_BASE_URL}/api/vehicles/${vehicleId}/mileage`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('fleetguard_token') || ''}`,
+    },
+    body: JSON.stringify({ current_mileage: currentMileage }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(getApiError(data, 'Unable to update vehicle mileage.'));
+  }
+
+  return data;
+}
+
 export async function getFleetList(filters = {}) {
   const params = new URLSearchParams();
   if (filters.type) params.append('type', filters.type);
