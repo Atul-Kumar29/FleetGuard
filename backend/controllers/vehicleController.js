@@ -140,6 +140,73 @@ async function getVehicleDetails(req, res) {
   }
 }
 
+async function updateVehicleMileage(req, res) {
+  try {
+    const { id } = req.params;
+    const mileage = req.body?.current_mileage;
+
+    if (!id) {
+      return res.status(400).json({ error: 'Vehicle ID is required.' });
+    }
+
+    if (mileage === undefined || mileage === null) {
+      return res.status(400).json({ error: 'current_mileage is required.' });
+    }
+
+    const currentMileage = Number(mileage);
+    if (!Number.isInteger(currentMileage) || currentMileage < 0) {
+      return res.status(400).json({ error: 'Current mileage must be a non-negative integer.' });
+    }
+
+    const supabase = getSupabaseClient(req.headers.authorization?.replace('Bearer ', '') || undefined);
+
+    const { data: vehicle, error: vehicleError } = await supabase
+      .from('vehicles')
+      .select('id, current_mileage')
+      .eq('id', id)
+      .single();
+
+    if (vehicleError || !vehicle) {
+      return res.status(404).json({ error: 'Vehicle not found.' });
+    }
+
+    const requestedByDriver = req.user && req.user.role === 'DRIVER';
+    if (requestedByDriver) {
+      const { data: assignment, error: assignmentError } = await supabase
+        .from('assignments')
+        .select('id')
+        .eq('vehicle_id', id)
+        .eq('driver_id', req.user.id)
+        .eq('status', 'ACTIVE')
+        .single();
+
+      if (assignmentError || !assignment) {
+        return res.status(403).json({ error: 'You may only update mileage for your assigned active vehicle.' });
+      }
+    }
+
+    const existingMileage = Number(vehicle.current_mileage || 0);
+    if (currentMileage < existingMileage) {
+      return res.status(400).json({ error: 'Mileage cannot be lower than the current recorded reading.' });
+    }
+
+    const { data: updatedVehicle, error: updateError } = await supabase
+      .from('vehicles')
+      .update({ current_mileage: currentMileage })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) {
+      return res.status(500).json({ error: 'Unable to update vehicle mileage.', details: updateError.message });
+    }
+
+    return res.status(200).json({ message: 'Mileage updated successfully.', vehicle: updatedVehicle });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || 'Unexpected server error.' });
+  }
+}
+
 async function getFleetList(req, res) {
   try {
     const { type, status, search, limit = 50, offset = 0 } = req.query;
@@ -265,4 +332,5 @@ module.exports = {
   registerVehicle,
   getVehicleDetails,
   getFleetList,
+  updateVehicleMileage,
 };
