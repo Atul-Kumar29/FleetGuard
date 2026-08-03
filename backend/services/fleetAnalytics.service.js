@@ -50,7 +50,7 @@ async function getFleetMetrics() {
       if (docs.length > 0) {
         const allActive = docs.every(doc => {
           const isExpiredDate = doc.expiration_date && new Date(doc.expiration_date) < today;
-          return doc.status === 'ACTIVE' && !isExpiredDate;
+          return (doc.status === 'VALID' || doc.status === 'WARNING' || doc.status === 'ACTIVE') && !isExpiredDate;
         });
         if (allActive) {
           compliantVehicles++;
