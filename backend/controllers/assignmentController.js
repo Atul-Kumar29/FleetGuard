@@ -324,6 +324,27 @@ const overrideAssignment = async (req, res) => {
             });
         }
 
+        // 7. Write the override audit log to assignment_overrides table
+        const {
+            error: overrideError
+        } = await supabase
+            .from("assignment_overrides")
+            .insert({
+                assignment_id: assignment.id,
+                vehicle_id: vehicle_id,
+                driver_id: driver_id,
+                approved_by: assigned_by,
+                justification: managerJustification.trim()
+            });
+
+        if (overrideError) {
+            console.error("Failed to log assignment override:", overrideError);
+            return res.status(500).json({
+                error: "Override audit logging failed",
+                details: overrideError.message
+            });
+        }
+
         return res.status(201).json({
             message: "Assignment override processed successfully",
             assignment: assignment,
