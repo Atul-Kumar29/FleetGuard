@@ -4,8 +4,9 @@ import axios from 'axios';
  * Service to interact with the Predictive Maintenance API endpoint.
  */
 
-// We use the proxy configured in vite.config.js (mapping /api to http://localhost:5000)
-const API_BASE_URL = '/api/admin';
+// Use the VITE_API_URL environment variable provided by Vercel for the Render backend URL
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = `${BASE_URL}/api/admin`;
 
 /**
  * Fetches the predictive maintenance risk report for all fleet vehicles.
