@@ -1,4 +1,4 @@
-import supabase from '../config/supabase.js';
+import { getSupabaseClient } from '../config/supabase.js';
 
 type Vehicle = {
   id: string;
@@ -44,15 +44,9 @@ type AssignmentOverride = {
   createdAt: string;
 };
 
-/**
- * Fetch and format every record from assignment_overrides.
- * Joins vehicles, users as Driver, and users as Manager.
- * Sorts by created_at descending (newest overrides first).
- *
- * @returns Formatted override records
- */
 async function getAssignmentOverrides(): Promise<AssignmentOverride[]> {
   try {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('assignment_overrides')
       .select(`
@@ -89,7 +83,6 @@ async function getAssignmentOverrides(): Promise<AssignmentOverride[]> {
 
     return records.map((record) => ({
       id: record.id,
-
       vehicle: record.vehicle
         ? {
             id: record.vehicle.id,
@@ -98,7 +91,6 @@ async function getAssignmentOverrides(): Promise<AssignmentOverride[]> {
             model: record.vehicle.model
           }
         : null,
-
       driver: record.driver
         ? {
             id: record.driver.id,
@@ -106,7 +98,6 @@ async function getAssignmentOverrides(): Promise<AssignmentOverride[]> {
             email: record.driver.email
           }
         : null,
-
       manager: record.manager
         ? {
             id: record.manager.id,
@@ -114,7 +105,6 @@ async function getAssignmentOverrides(): Promise<AssignmentOverride[]> {
             email: record.manager.email
           }
         : null,
-
       overrideReason: record.justification,
       createdAt: record.created_at
     }));
@@ -123,6 +113,4 @@ async function getAssignmentOverrides(): Promise<AssignmentOverride[]> {
   }
 }
 
-export {
-  getAssignmentOverrides
-};
+export { getAssignmentOverrides };

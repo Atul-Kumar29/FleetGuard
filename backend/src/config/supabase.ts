@@ -45,7 +45,7 @@ function createSupabaseClient(
     },
 
     realtime: {
-      transport: class DummyWebSocket {}
+      transport: class DummyWebSocket {} as any
     },
 
     // The service-role client is used only by this server after
@@ -53,13 +53,15 @@ function createSupabaseClient(
     //
     // Without it, a real user JWT is forwarded so Supabase RLS
     // can evaluate auth.uid().
-    global: accessToken
+    ...(accessToken
       ? {
-          headers: {
-            Authorization: `Bearer ${accessToken}`
+          global: {
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
           }
         }
-      : undefined
+      : {})
   });
 }
 
