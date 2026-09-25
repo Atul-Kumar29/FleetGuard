@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 import { postPreTripChecklist } from '../../services/api';
 import { Disc, OctagonAlert, Droplet, ShieldAlert, CheckCircle2, AlertTriangle, ClipboardCheck, Zap } from 'lucide-react';
 
+/**
+ * @typedef {{
+ *   driverId: string,
+ *   vehicleId: string,
+ *   onSubmitted?: (result?: any) => void,
+ * }} PreTripChecklistFormProps
+ */
+
 const DEFAULT_ITEMS = [
   { id: 'tires_lights', label: 'Tires & Lights',       icon: Disc,        description: 'Tread depth, tire pressure, headlights, brake lights & turn signals' },
   { id: 'brakes',       label: 'Brake System',          icon: OctagonAlert, description: 'Foot brake responsiveness, air brake pressure & emergency parking brake' },
@@ -9,6 +17,9 @@ const DEFAULT_ITEMS = [
   { id: 'safety_gear',  label: 'Safety Equipment',      icon: ShieldAlert, description: 'Seatbelts operational, fire extinguisher charged, reflective triangles' },
 ];
 
+/**
+ * @param {PreTripChecklistFormProps} props
+ */
 export default function PreTripChecklistForm({ driverId, vehicleId, onSubmitted }) {
   const [itemsState, setItemsState] = useState({ tires_lights: 'PASS', brakes: 'PASS', fluids: 'PASS', safety_gear: 'PASS' });
   const [notes, setNotes] = useState('');

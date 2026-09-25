@@ -421,7 +421,7 @@ export async function createAssignment(payload: any) {
   return data;
 }
 
-export async function unassignDriver(vehicleId: string) {
+export async function unassignDriver(vehicleId: string | number) {
   const response = await fetch(
     `${API_BASE_URL}/api/assignments/unassign`,
     {

@@ -5,6 +5,39 @@ import NonCompliantAssignmentModal from './NonCompliantAssignmentModal';
 import OverrideJustificationForm from './OverrideJustificationForm';
 import { X, User, AlertTriangle } from 'lucide-react';
 
+/**
+ * @typedef {{
+ *   isOpen: boolean,
+ *   onClose: () => void,
+ *   vehicle?: {
+ *     id?: string | number,
+ *     make?: string,
+ *     model?: string,
+ *     license_plate?: string,
+ *     vin?: string,
+ *     compliance_status?: string,
+ *     status?: string,
+ *     assigned_driver?: {
+ *       driver_name?: string,
+ *       driver_email?: string,
+ *     } | null,
+ *     expired_documents?: Array<any>,
+ *   } | null,
+ *   vehicles?: Array<{
+ *     id: string | number,
+ *     make?: string,
+ *     model?: string,
+ *     license_plate?: string,
+ *     compliance_status?: string,
+ *     status?: string,
+ *   }>,
+ *   onSuccess?: () => void,
+ * }} AssignDriverDrawerProps
+ */
+
+/**
+ * @param {AssignDriverDrawerProps} props
+ */
 export default function AssignDriverDrawer({
   isOpen,
   onClose,

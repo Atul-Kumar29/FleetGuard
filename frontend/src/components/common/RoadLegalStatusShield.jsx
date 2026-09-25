@@ -1,6 +1,31 @@
 import React, { useState } from 'react';
 import { Shield, ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, ChevronDown, ChevronRight } from 'lucide-react';
 
+/**
+ * @typedef {{
+ *   isCompliant?: boolean,
+ *   vehicle?: {
+ *     id?: string,
+ *     status?: string,
+ *     compliance_status?: string,
+ *     license_plate?: string,
+ *     make?: string,
+ *     model?: string,
+ *   } | null,
+ *   complianceItems?: Array<{
+ *     id?: string | number,
+ *     is_expired?: boolean,
+ *     status?: string,
+ *     document_type?: string,
+ *     expiration_date?: string | Date,
+ *   }>,
+ *   loading?: boolean,
+ * }} RoadLegalStatusShieldProps
+ */
+
+/**
+ * @param {RoadLegalStatusShieldProps} props
+ */
 export default function RoadLegalStatusShield({
   isCompliant = true,
   vehicle = null,
